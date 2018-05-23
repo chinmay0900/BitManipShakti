@@ -1,8 +1,8 @@
-import LeadingZeroCounter::*;
+import lzcounter::*;
 
 (*synthesize*)
 module mkTestbench();
-	LeadingZeroCounter counter <- mkLeadingZeroCounter;
+	Ifc_lzcounter counter <- mklzcounter;
 	Reg#(Bit#(8)) state <- mkReg(0);
 	Integer verbosity=0;
 	rule rl_start(state == 0);

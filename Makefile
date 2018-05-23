@@ -1,12 +1,12 @@
 ### Makefile for the srio
 
-TOP_MODULE:=mklzcounter
-TOP_FILE:=lzcounter.bsv
-TOP_DIR:= ./src
+TOP_MODULE:=mkTestbench
+TOP_FILE:=Testbench.bsv
+TOP_DIR:= ./testbench
 BSVBUILDDIR:=./build/
 FILES:= ./src/:./testbench/
 BSVINCDIR:= .:%/Prelude:%/Libraries:%/Libraries/BlueNoC:$(FILES)
-default: full_clean compile link
+default: full_clean compile link simulate
 .PHONY: compile
 compile:
 	@echo Compiling $(TOP_MODULE)....
@@ -25,7 +25,7 @@ link:
 .PHONY: simulate
 simulate:
 	@echo Simulation...
-	./out 
+	./bin/out 
 	@echo Simulation finished. 
 
 .PHONY: clean

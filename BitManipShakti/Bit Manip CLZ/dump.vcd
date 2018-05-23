@@ -1,0 +1,162 @@
+$date
+	Wed May 23 15:32:02 2018
+$end
+$version
+	Bluespec VCD dumper 2.1
+$end
+$timescale
+	1 us
+$end
+$scope module main $end
+$scope module top $end
+$var reg 1 ! CLK $end
+$var reg 1 ! CLK $end
+$var reg 1 " CAN_FIRE_RL_rl_start $end
+$var reg 1 # CAN_FIRE_RL_rl_work $end
+$var reg 1 $ RST_N $end
+$var reg 1 % WILL_FIRE_RL_rl_start $end
+$var reg 1 & WILL_FIRE_RL_rl_work $end
+$var reg 8 ( state $end
+$scope module counter $end
+$var reg 1 ! CLK $end
+$var reg 1 ) CAN_FIRE_increment_count $end
+$var reg 1 * CAN_FIRE_leftshift_rs1 $end
+$var reg 1 + CAN_FIRE_load_rs1 $end
+$var reg 1 , CAN_FIRE_read_count $end
+$var reg 1 - CAN_FIRE_read_rs1 $end
+$var reg 1 . CAN_FIRE_read_rs1value $end
+$var reg 1 / RST_N $end
+$var reg 1 0 WILL_FIRE_increment_count $end
+$var reg 1 1 WILL_FIRE_leftshift_rs1 $end
+$var reg 1 2 WILL_FIRE_load_rs1 $end
+$var reg 8 3 _read__h77 $end
+$var reg 8 4 rg_rs1__h139 $end
+$var reg 1 5 EN_increment_count $end
+$var reg 1 6 EN_leftshift_rs1 $end
+$var reg 1 7 EN_load_rs1 $end
+$var reg 1 8 RDY_increment_count $end
+$var reg 1 9 RDY_leftshift_rs1 $end
+$var reg 1 : RDY_load_rs1 $end
+$var reg 1 ; RDY_read_count $end
+$var reg 1 < RDY_read_rs1 $end
+$var reg 1 = RDY_read_rs1value $end
+$var reg 8 > leftshift_rs1_shiftvalue $end
+$var reg 8 ? load_rs1_newval $end
+$var reg 8 @ read_count $end
+$var reg 1 A read_rs1 $end
+$var reg 8 B read_rs1value $end
+$var reg 8 E count $end
+$var reg 8 F rg_rs1 $end
+$upscope $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+1!
+0"
+0#
+0$
+0%
+0&
+b0 (
+1)
+1*
+1+
+1,
+1-
+1.
+0/
+00
+01
+02
+b100000 3
+b100100 4
+05
+06
+07
+18
+19
+1:
+0;
+0<
+0=
+b0 >
+b0 ?
+b0 @
+0A
+b0 B
+b0 E
+b10101010 F
+1"
+1%
+12
+17
+b101 ?
+#5
+0!
+1$
+1/
+#10
+0"
+1#
+0%
+1&
+10
+11
+02
+b0 3
+b101 4
+15
+16
+07
+b1 >
+1!
+b1 (
+b101 F
+#15
+0!
+#20
+b1 3
+b1010 4
+b1 @
+1!
+b1 E
+b1010 F
+#25
+0!
+#30
+b10 3
+b10100 4
+b10 @
+1!
+b10 E
+b10100 F
+#35
+0!
+#40
+b11 3
+b101000 4
+b11 @
+1!
+b11 E
+b101000 F
+#45
+0!
+#50
+b100 3
+b1010000 4
+b100 @
+1!
+b100 E
+b1010000 F
+#55
+0!
+#60
+b101 3
+b10100000 4
+b101 @
+1A
+1!
+b101 E
+b10100000 F
+#65
+0!

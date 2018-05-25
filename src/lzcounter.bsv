@@ -1,37 +1,34 @@
 package lzcounter;
 
   interface Ifc_lzcounter;
-  	method Bool read_rs1();
-  	method Action load_rs1(Bit#(8) newval);
-  	method Bit#(8) read_count();
-  	method Action increment_count();
-  	method Bit#(8) read_rs1value();
-  	method Action leftshift_rs1(Bit#(8) shiftvalue);
+    method Action start(Bit #(32) x);  
   endinterface
   
-  (*synthesize*)
   module mklzcounter(Ifc_lzcounter);
-  	Reg#(Bit#(8)) rg_rs1 <- mkRegU();
-  	Reg#(Bit#(8)) rg_count <- mkReg(0);
+    
+    Reg#(Bit#(32)) rg_rs1 <- mkRegU();
+    Reg#(Bit#(32)) rg_count <- mkReg(0);
+    Reg#(Bool) work <- mkReg(False);
+    Wire #(Bit#(32)) wr_shifter <- mkWire();
+    
+    rule rl_checkzero(rg_rs1==0&&work);
+      $display("Output : 32\n");
+      work <= False;
+      $finish;
+    endrule
+
+    for(Integer i=0;i<32;i=i+1)
+      rule rl_shift_i(rg_rs1[31-i] == 1 &&work);
+        $display("Output : %d\n",i);
+        work <= False;
+        $finish;
+      endrule
   
-  	method Action load_rs1(Bit#(8) newval);
-  		rg_rs1 <= newval;
-  	endmethod
-  	method Bit#(8) read_rs1value();
-  		return rg_rs1;
-  	endmethod
-  	method Bool read_rs1();
-  		if(rg_rs1[7]==1) return True;
-  		else return False;
-  	endmethod
-  	method Bit#(8) read_count();
-  		return rg_count;
-  	endmethod
-  	method Action increment_count();
-  		rg_count <= rg_count + 1;
-  	endmethod
-  	method Action leftshift_rs1(Bit#(8) shiftvalue);
-  		rg_rs1 <= rg_rs1 << shiftvalue;
-  	endmethod
+    method Action start(Bit#(32) x);
+      work <= True;
+      rg_rs1 <= x;
+    endmethod
+    
   endmodule
+  
 endpackage

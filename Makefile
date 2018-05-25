@@ -1,11 +1,17 @@
 ### Makefile for the srio
 
-TOP_MODULE:=mkTestbench
-TOP_FILE:=Testbench.bsv
-TOP_DIR:= ./testbench
+TOP_MODULE:=mklzcounter
+TOP_FILE:=lzcounter.bsv
+HOMEDIR:=./
+TOP_DIR:=./src
 BSVBUILDDIR:=./build/
+VERILOGDIR:=./verilog/
 FILES:= ./src/:./testbench/
 BSVINCDIR:= .:%/Prelude:%/Libraries:%/Libraries/BlueNoC:$(FILES)
+FPGA=xc7a100tcsg324-1
+export HOMEDIR=./
+export TOP=$(TOP_MODULE)
+
 default: full_clean compile link simulate
 .PHONY: compile
 compile:
@@ -22,15 +28,32 @@ link:
   -bdir $(BSVBUILDDIR) -keep-fires 
 	@echo Linking finished
 
+.PHONY: generate_verilog 
+generate_verilog:
+	@echo Compiling $(TOP_MODULE) in verilog ...
+	@mkdir -p $(BSVBUILDDIR); 
+	@mkdir -p $(VERILOGDIR); 
+	@echo "old_define_macros = $(define_macros)" > old_vars
+	@bsc -u -verilog -elab -vdir $(VERILOGDIR) -bdir $(BSVBUILDDIR) -info-dir $(BSVBUILDDIR)\
+  $(define_macros) -D verilog=True $(BSVCOMPILEOPTS) -verilog-filter ${BLUESPECDIR}/bin/basicinout\
+  -p $(BSVINCDIR) -g $(TOP_MODULE) $(TOP_DIR)/$(TOP_FILE)  || (echo "BSC COMPILE ERROR"; exit 1) 
+
 .PHONY: simulate
 simulate:
 	@echo Simulation...
 	./bin/out 
 	@echo Simulation finished. 
 
+.PHONY: vivado_build
+vivado_build: 
+	@vivado -mode tcl -source $(HOMEDIR)/src/tcl/create_project.tcl -tclargs $(TOP_MODULE) $(FPGA) || (echo "Could \
+not create core project"; exit 1)
+	@vivado -mode tcl -source $(HOMEDIR)/src/tcl/run.tcl || (echo "ERROR: While running synthesis")
+
 .PHONY: clean
 clean:
-	@rm -rf build bin
+	rm -rf build bin *.jou *.log
 
 .PHONY: full_clean
-full_clean:
+full_clean: clean
+	rm -rf verilog fpga

@@ -1,32 +1,49 @@
 package lzcounter;
 
   interface Ifc_lzcounter;
-    method Action start(Bit #(32) x);  
+    method Action ma_start(Bit #(64) rg_rs1);
+    method Bit#(64) mn_done;
   endinterface
   
   module mklzcounter(Ifc_lzcounter);
+
+    Reg#(Bit#(64)) rg_x <- mkRegU();
+    Reg#(Bit#(7)) rg_count <- mkRegU();
+    Reg#(Bit#(64)) rg_work <- mkReg(0);
+
+//The interface has one input (rg_rs1 stored in rg_x) and one output
+//The algorithm calculates (x-1)&(~x) which sets the trailing zeroes and resets everthing else
+//Hence the input is first reversed in rule reverse
+//Then the no. of set bits is counted in rule get_count 
+//The 7 bit output is zeroExtended in rule put_count and stored in rg_x which reflects in next cycle and returned as output 
+
+    rule rl_checkzero(rg_work == 1 && rg_x == 0);
+      rg_count <= 64;
+      rg_work <= 4;
+    endrule
     
-    Reg#(Bit#(32)) rg_rs1 <- mkRegU();
-    Reg#(Bit#(32)) rg_count <- mkReg(0);
-    Reg#(Bool) work <- mkReg(False);
-    Wire #(Bit#(32)) wr_shifter <- mkWire();
-    
-    rule rl_checkzero(rg_rs1==0&&work);
-      $display("Output : 32\n");
-      work <= False;
-      $finish;
+    rule rl_reverse(rg_work == 1 && rg_x != 0);
+      rg_x <= reverseBits(rg_x);
+      rg_work <= 2;  
     endrule
 
-    for(Integer i=0;i<32;i=i+1)
-      rule rl_shift_i(rg_rs1[31-i] == 1 &&work);
-        $display("Output : %d\n",i);
-        work <= False;
-        $finish;
-      endrule
-  
-    method Action start(Bit#(32) x);
-      work <= True;
-      rg_rs1 <= x;
+    rule rl_getcount(rg_work == 2);  
+      rg_count <= pack(countOnes((rg_x-1)&(~rg_x))); 
+      rg_work <= 3; 
+    endrule
+
+    rule rl_putcount(rg_work == 3);
+       rg_x <= zeroExtend(rg_count);
+       rg_work <= 4;
+    endrule
+
+    method Action ma_start(Bit#(64) rg_rs1) if(rg_work==0);
+      rg_work <= 1;
+      rg_x <= rg_rs1;
+    endmethod
+    
+    method Bit#(64) mn_done if(rg_work==4);
+      return rg_x;
     endmethod
     
   endmodule

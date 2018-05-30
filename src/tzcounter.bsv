@@ -4,10 +4,9 @@ package tzcounter;
     method Action ma_start(Bit #(64) rs1);
     method Bit#(64) mn_done;
   endinterface
-  
+    
   module mktzcounter(Ifc_tzcounter);
 
-    
     Reg#(Bit#(64)) rg_x <- mkRegU();
     Reg#(Bit#(7)) rg_count <- mkRegU();
     Reg#(Bit#(64)) rg_work <- mkReg(0);

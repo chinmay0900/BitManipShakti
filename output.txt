@@ -1,0 +1,95 @@
+rm -rf build bin *.jou *.log
+rm -rf verilog fpga
+Compiling mkTestbench....
+checking package dependencies
+compiling ./src//lzcounter.bsv
+compiling ./src//tzcounter.bsv
+compiling ./src//countsetbt.bsv
+compiling ./src//greverse.bsv
+compiling ./src//andwithc.bsv
+compiling ./src//shiftones.bsv
+compiling ./src//rotate.bsv
+compiling ./src//btextract.bsv
+compiling ./testbench/Testbench.bsv
+code generation for mkTestbench starts
+Elaborated module file created: ./build//mkTestbench.ba
+All packages are up to date.
+Compilation finished
+Linking mkTestbench...
+Bluesim object created: build//mkTestbench.{h,o}
+Bluesim object created: build//model_mkTestbench.{h,o}
+Simulation shared library created: ./bin/out.so
+Simulation executable created: ./bin/out
+Linking finished
+Simulation...
+./bin/out 
+rg_y:00000000ffffffff, rg_lsetbt:0000000000000001
+
+rg_y:00000000fffffffe, rg_lsetbt:0000000000000002
+
+rg_y:00000000fffffffc, rg_lsetbt:0000000000000004
+
+rg_y:00000000fffffff8, rg_lsetbt:0000000000000008
+
+rg_y:00000000fffffff0, rg_lsetbt:0000000000000010
+
+rg_y:00000000ffffffe0, rg_lsetbt:0000000000000020
+
+rg_y:00000000ffffffc0, rg_lsetbt:0000000000000040
+
+rg_y:00000000ffffff80, rg_lsetbt:0000000000000080
+
+rg_y:00000000ffffff00, rg_lsetbt:0000000000000100
+
+rg_y:00000000fffffe00, rg_lsetbt:0000000000000200
+
+rg_y:00000000fffffc00, rg_lsetbt:0000000000000400
+
+rg_y:00000000fffff800, rg_lsetbt:0000000000000800
+
+rg_y:00000000fffff000, rg_lsetbt:0000000000001000
+
+rg_y:00000000ffffe000, rg_lsetbt:0000000000002000
+
+rg_y:00000000ffffc000, rg_lsetbt:0000000000004000
+
+rg_y:00000000ffff8000, rg_lsetbt:0000000000008000
+
+rg_y:00000000ffff0000, rg_lsetbt:0000000000010000
+
+rg_y:00000000fffe0000, rg_lsetbt:0000000000020000
+
+rg_y:00000000fffc0000, rg_lsetbt:0000000000040000
+
+rg_y:00000000fff80000, rg_lsetbt:0000000000080000
+
+rg_y:00000000fff00000, rg_lsetbt:0000000000100000
+
+rg_y:00000000ffe00000, rg_lsetbt:0000000000200000
+
+rg_y:00000000ffc00000, rg_lsetbt:0000000000400000
+
+rg_y:00000000ff800000, rg_lsetbt:0000000000800000
+
+rg_y:00000000ff000000, rg_lsetbt:0000000001000000
+
+rg_y:00000000fe000000, rg_lsetbt:0000000002000000
+
+rg_y:00000000fc000000, rg_lsetbt:0000000004000000
+
+rg_y:00000000f8000000, rg_lsetbt:0000000008000000
+
+rg_y:00000000f0000000, rg_lsetbt:0000000010000000
+
+rg_y:00000000e0000000, rg_lsetbt:0000000020000000
+
+rg_y:00000000c0000000, rg_lsetbt:0000000040000000
+
+rg_y:0000000080000000, rg_lsetbt:0000000080000000
+
+rg_y:0000000000000000, rg_lsetbt:0000000000000000
+
+
+                 360:Output:Hex-000000002d403d88 or Dec-           759184776
+
+Simulation finished.

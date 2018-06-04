@@ -5,6 +5,7 @@ import greverse  ::*;
 import andwithc  ::*;
 import shiftones ::*;
 import rotate    ::*;
+import btextract  ::*;
 
 (*synthesize*)
 module mkTestbench();
@@ -16,14 +17,15 @@ module mkTestbench();
   Ifc_andwithc andwithcer <- mkandwithc;
   Ifc_shiftones oneshifter <- mkshiftones;
   Ifc_rotate rotater <- mkrotate;
+  Ifc_btextract btextracter <- mkbtextract;
 
-  Reg#(Bit#(8)) rg_opcode <- mkReg(3);
+  Reg#(Bit#(8)) rg_opcode <- mkReg(9);
       //Change opcode here to execute lzcounter(0) or tzcounter(1) or
       //greverse(2) or countsetbits(3) or andwithc (4) or shiftoneleft(5) or 
-      //shiftoneright(6) or rotateleft(7) or rotateright(8)
-  Reg#(Bit#(64)) rg_rs1 <- mkReg('h0000000000700360);
+      //shiftoneright(6) or rotateleft(7) or rotateright(8) or btextract(9)
+  Reg#(Bit#(64)) rg_rs1 <- mkReg('h000000002d403d88);
             //Insert the number here ^^
-  Reg#(Bit#(64)) rg_rs2 <- mkReg('h0000000000000028);
+  Reg#(Bit#(64)) rg_rs2 <- mkReg('h00000000ffffffff);
   Reg#(Bit#(64)) rg_rd <- mkRegU();
   Reg#(Bit#(64)) rg_state<-mkReg(0);
 
@@ -55,6 +57,9 @@ module mkTestbench();
       rg_state <= 1; end
     if(rg_opcode==8) begin
       rotater.ma_start_rgt(rg_rs1,rg_rs2);
+      rg_state <= 1; end
+    if(rg_opcode==9) begin
+      btextracter.ma_start(rg_rs1,rg_rs2);
       rg_state <= 1; end
   endrule
 
@@ -92,6 +97,11 @@ module mkTestbench();
 
   rule rl_store_rd_rotate(rg_state == 1 && (rg_opcode==7||rg_opcode==8));
     rg_rd <= rotater.mn_done;
+    rg_state <= 2;
+  endrule
+
+  rule rl_store_rd_bextract(rg_state == 1 && rg_opcode == 9);
+    rg_rd <= btextracter.mn_done;
     rg_state <= 2;
   endrule
 

@@ -1,7 +1,5 @@
 package btextract;
 
-  import Vector::*;
-
   interface Ifc_btextract;
     method Action ma_start(Bit #(64) rs1, Bit#(64) rs2);
     method Bit#(64) mn_done;

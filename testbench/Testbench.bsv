@@ -21,14 +21,14 @@ module mkTestbench();
   Ifc_btextract btextracter <- mkbtextract;
   Ifc_btdeposit btdepositer <- mkbtdeposit;
 
-  Reg#(Bit#(8)) rg_opcode <- mkReg(9);
+  Reg#(Bit#(8)) rg_opcode <- mkReg(5);
       //Change opcode here to execute lzcounter(0) or tzcounter(1) or
       //greverse(2) or countsetbits(3) or andwithc (4) or shiftoneleft(5) or 
       //shiftoneright(6) or rotateleft(7) or rotateright(8) or btextract(9)
       //or btdeposit(10)
   Reg#(Bit#(64)) rg_rs1 <- mkReg('h000000002d402d2f);
             //Insert the number here ^^
-  Reg#(Bit#(64)) rg_rs2 <- mkReg('h000000000f003000);
+  Reg#(Bit#(64)) rg_rs2 <- mkReg('h000000000f003030);
   Reg#(Bit#(64)) rg_rd <- mkRegU();
   Reg#(Bit#(64)) rg_state<-mkReg(0);
 
@@ -50,16 +50,16 @@ module mkTestbench();
       andwithcer.ma_start(rg_rs1,rg_rs2);
       rg_state <= 1; end
     if(rg_opcode==5) begin
-      oneshifter.ma_start_lft(rg_rs1,rg_rs2);
+      oneshifter.ma_start(rg_rs1,rg_rs2,1'b0);
       rg_state <= 1; end
     if(rg_opcode==6) begin
-      oneshifter.ma_start_rgt(rg_rs1,rg_rs2);
+      oneshifter.ma_start(rg_rs1,rg_rs2,1'b1);
       rg_state <= 1; end
     if(rg_opcode==7) begin
-      rotater.ma_start_lft(rg_rs1,rg_rs2);
+      rotater.ma_start(rg_rs1,rg_rs2,1'b0);
       rg_state <= 1; end
     if(rg_opcode==8) begin
-      rotater.ma_start_rgt(rg_rs1,rg_rs2);
+      rotater.ma_start(rg_rs1,rg_rs2,1'b1);
       rg_state <= 1; end
     if(rg_opcode==9) begin
       btextracter.ma_start(rg_rs1,rg_rs2);
@@ -72,7 +72,7 @@ module mkTestbench();
 //Rule store_rd gets output from lzcounter and stores in rd 
 //(reflected in next cycle)
   rule rl_store_rd_lz(rg_state == 1 && rg_opcode==0);    
-    rg_rd <= lzcount.mn_done();
+    rg_rd <= zeroExtend(lzcount.mn_done());
     rg_state <= 2;
   endrule
 

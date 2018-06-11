@@ -23,18 +23,13 @@ package tzcounter;
       $display("rg_x value in tzcounter : %h\n",rg_x);
     endrule
 
-    rule rl_putcount(rg_work == 2);
-      rg_x <= zeroExtend(rg_count);
-      rg_work <= 3;
-    endrule
-  
     method Action ma_start(Bit#(64) rs1) if(rg_work==0);
       rg_work <= 1;
       rg_x <= rs1;
     endmethod
 
-    method Bit#(64) mn_done if(rg_work==3);
-      return rg_x;
+    method Bit#(64) mn_done if(rg_work==2);
+      return zeroExtend(rg_count);
     endmethod
 
   endmodule

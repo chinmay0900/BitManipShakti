@@ -37,10 +37,14 @@ package ALU;
       else if((rg_x & (rg_y & -rg_y)) > 0 && rg_depext == 1) rg_rd <= rg_rd | rg_m; //extract
       rg_y <= rg_y - (rg_y & -rg_y);
       rg_m <= rg_m << 1;
-      if (rg_y == 0) rg_work <= True;
+      if (rg_y == 0) begin
+        rg_work <= True;
+        rg_depext<= 0;
+      end
     endrule
 
-    method Action ma_start(Bit#(5) opcode, Bit#(3) funct3, Bit#(12) imm, Bit#(64) rs1, Bit#(64) rs2); 
+    method Action ma_start(Bit#(5) opcode, Bit#(3) funct3, Bit#(12) imm, Bit#(64) rs1, Bit#(64)
+    rs2)if(rg_depext==0); 
       Bit#(64) a = 0, b = 0, c = 0, d = 0, e = 0, f = 0;
 
       if(opcode == 0 && funct3 == 0) rg_rd <= zeroExtend(pack(countZerosMSB(rs1)));

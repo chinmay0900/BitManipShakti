@@ -8,8 +8,13 @@ package ALU;
 
   module mkALU(Ifc_ALU);
 
-    Reg#(Bit#(64)) rg_rd <- mkRegU;
+    Reg#(Bit#(64)) rg_rd <- mkReg(0);
     Reg#(Bool) rg_work <- mkDReg(False);
+    Reg#(Bit#(64)) rg_m <- mkReg(1);
+    Reg#(Bit#(64)) rg_x <- mkReg(0);
+    Reg#(Bit#(64)) rg_y <- mkReg(0);
+    Reg#(Bit#(2)) rg_depext <- mkReg(0);
+
 //opcode OP-IMM = 0 funct3 = 0 : CLZ
 //opcode OP-IMM = 0 funct3 = 1 : CTZ
 //opcode OP-IMM = 0 funct3 = 2 : PCNT
@@ -24,7 +29,17 @@ package ALU;
 //opcode OP = 1 funct3 = 1 imm = c**: ROR
 //opcode OP = 1 funct3 = 2 imm = c**: ROL
 //opcode OP = 1 funct3 = 3 : GREV
-    
+//opcode OP = 1 funct3 = 4 : BEXT
+//opcode OP = 1 funct3 = 5 : BDEP
+
+    rule rl_putbtdeposit(rg_depext != 0);
+      if((rg_x & (rg_m)) > 0 && rg_depext == 2) rg_rd <= rg_rd | (rg_y & -rg_y); //deposit
+      else if((rg_x & (rg_y & -rg_y)) > 0 && rg_depext == 1) rg_rd <= rg_rd | rg_m; //extract
+      rg_y <= rg_y - (rg_y & -rg_y);
+      rg_m <= rg_m << 1;
+      if (rg_y == 0) rg_work <= True;
+    endrule
+
     method Action ma_start(Bit#(5) opcode, Bit#(3) funct3, Bit#(12) imm, Bit#(64) rs1, Bit#(64) rs2); 
       Bit#(64) a = 0, b = 0, c = 0, d = 0, e = 0, f = 0;
 
@@ -49,7 +64,7 @@ package ALU;
         else f = e;
         rg_rd <= f;
       end
-if(opcode == 1 && funct3 == 0) rg_rd <= (rs1 & ~rs2);
+      if(opcode == 1 && funct3 == 0) rg_rd <= (rs1 & ~rs2);
       if(opcode == 1 && funct3 == 1 && imm[11:10] == 2) rg_rd <= ~(~rs1 >> (rs2 & 63));
       if(opcode == 1 && funct3 == 2 && imm[11:10] == 2) rg_rd <= ~(~rs1 << (rs2 & 63));
       if(opcode == 1 && funct3 == 1 && imm[11:10] == 3) rg_rd <= ((rs1 >> (rs2 & 63)) | (rs1 << (64 - (rs2 & 63))));
@@ -69,7 +84,17 @@ if(opcode == 1 && funct3 == 0) rg_rd <= (rs1 & ~rs2);
         else f = e;
         rg_rd <= f;
       end
-      rg_work <= True;
+      if(opcode == 1 && funct3 == 4) begin
+        rg_x <= rs1; 
+        rg_y <= rs2;
+        rg_depext <= 1;
+      end
+      else if(opcode == 1 && funct3 == 5) begin
+        rg_x <= rs1; 
+        rg_y <= rs2;
+        rg_depext <= 2;
+      end
+      else rg_work <= True;
     endmethod
 
     method Bit#(64) mn_done if(rg_work);

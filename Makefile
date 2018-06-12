@@ -1,7 +1,7 @@
 ### Makefile for the srio
 
 TOP_MODULE:=mkTestbench
-TOP_FILE:=Testbench_copy.bsv
+TOP_FILE:=Testbench.bsv
 HOMEDIR:=./
 TOP_DIR:=./testbench
 BSVBUILDDIR:=./build/

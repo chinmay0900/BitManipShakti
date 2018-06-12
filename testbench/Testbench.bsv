@@ -5,16 +5,18 @@ module mkTestbench();
   
   Ifc_ALU alu <- mkALU;
 
-  Reg#(Bit#(32)) rg_inst <- mkReg('h000002000);
-  Reg#(Bit#(64)) rg_rs1 <- mkReg('h000000002d402d2f);
+  Bit#(5) rg_opcode = 'h00;
+  Bit#(3) rg_funct3 = 'h5;
+  Bit#(12) rg_imm = 'h030;
+  Bit#(64) rg_rs1 = 'h000000002d402d2f;
             //Insert the number here ^^
-  Reg#(Bit#(64)) rg_rs2 <- mkReg('h000000000f003030);
-  Reg#(Bit#(64)) rg_state<-mkReg(0);
+  Bit#(64) rg_rs2 = 'h000000000f003004;
+  Reg#(Bool) rg_state <- mkReg(True);
 
-  rule rl_start(rg_state == 0);
-    $display($time, "\tInputs: rs1: %h rs2: %h instruction: %h", rg_rs1, rg_rs2, rg_inst);
-    alu.ma_start(rg_inst, rg_rs1, rg_rs2);
-    rg_state <= 1;
+  rule rl_start(rg_state);
+    $display($time, "\tInputs: rs1: %h rs2: %h \n\t\t\topcode: %h funct3: %h imm:%h\n", rg_rs1, rg_rs2, rg_opcode, rg_funct3, rg_imm);
+    alu.ma_start(rg_opcode, rg_funct3, rg_imm, rg_rs1, rg_rs2);
+    rg_state <= False;
   endrule
 
   rule rl_store;

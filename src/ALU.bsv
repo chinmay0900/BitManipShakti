@@ -47,12 +47,16 @@ package ALU;
     rs2)if(rg_depext==0); 
       Bit#(64) a = 0, b = 0, c = 0, d = 0, e = 0, f = 0;
 
+      if(opcode == 0 && (funct3 == 0 || funct3 == 1)) begin
+        if(funct3 == 0) f = reverseBits(rs1);
+        else f = rs1;
+        rg_rd <= zeroExtend(pack(countZerosLSB(f)));
+      end
       if(opcode == 0 && funct3 == 2) rg_rd <= zeroExtend(pack(countOnes(rs1)));
       if(opcode == 0 && funct3 == 3 && imm[11:10] == 2) rg_rd <= ~(~rs1 << (imm & 63));
       if(opcode == 0 && funct3 == 4 && imm[11:10] == 2) rg_rd <= ~(~rs1 >> (imm & 63));
       if(opcode == 0 && funct3 == 3 && imm[11:10] == 3) rg_rd <= ((rs1 >> (imm & 63)) | (rs1 << (64 - (imm & 63))));
-      if(opcode == 0 && (funct3 == 0 || funct3 == 5)) begin
-        if(funct3 == 0) imm = 'h0ff;
+      if(opcode == 0 && funct3 == 5) begin
         if(imm[0] == 1) a = ((rs1&64'h5555555555555555)<<1)|((rs1&64'hAAAAAAAAAAAAAAAA)>>1);
         else a = rs1;
         if(imm[1] == 1) b = ((a&64'h3333333333333333)<<2)|((a&64'hCCCCCCCCCCCCCCCC)>>2);
@@ -65,11 +69,8 @@ package ALU;
         else e = d;
         if(imm[5] == 1) f = ((e&64'h00000000FFFFFFFF)<<32)|((e&64'hFFFFFFFF00000000)>>32);
         else f = e;
-        if(funct3 == 5) rg_rd <= f;
+        rg_rd <= f;
       end
-      if(opcode == 0 && funct3 == 0) rg_rd <= zeroExtend(pack(countZerosLSB(f)));
-      else if (opcode == 0 && funct3 == 1) rg_rd <= zeroExtend(pack(countZerosLSB(rs1)));
-      
       if(opcode == 1 && funct3 == 0) rg_rd <= (rs1 & ~rs2);
       if(opcode == 1 && funct3 == 1 && imm[11:10] == 2) rg_rd <= ~(~rs1 >> (rs2 & 63));
       if(opcode == 1 && funct3 == 2 && imm[11:10] == 2) rg_rd <= ~(~rs1 << (rs2 & 63));

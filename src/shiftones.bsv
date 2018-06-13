@@ -7,29 +7,17 @@ package shiftones;
 
   module mkshiftones(Ifc_shiftones);
 
-    Reg#(Bit#(64)) rg_x <- mkRegU();
-    Reg#(Bit#(64)) rg_y <- mkRegU();
-    Reg#(Bit#(64)) rg_work <- mkReg(0);
- 
-    rule rl_shiftonelft(rg_work==1);
-      rg_x <= ~(~rg_x << (rg_y & 63));
-      rg_work <= 3;
-    endrule
-
-    rule rl_shiftonergt(rg_work==2);
-      rg_x <= ~(~rg_x >> rg_y);
-      rg_work <= 3;
-    endrule
+    Reg#(Bit#(1)) rg_work <- mkReg(0);
+    Reg#(Bit#(64)) rg_rd <- mkReg(0);
 
     method Action ma_start(Bit#(64) rs1, Bit#(64) rs2, Bit#(1) dir) if(rg_work == 0); 
-      if(dir==0) rg_work <= 1;
-      else rg_work <= 2;
-      rg_x <= rs1;
-      rg_y <= rs2;
+      if(dir==0) rg_rd <= ~(~rs1 << (rs2 & 63));
+      else rg_rd <= ~(~rs1 >> rs2);
+      rg_work <= 1;
     endmethod
 
-    method Bit#(64) mn_done if(rg_work==3);
-      return rg_x;
+    method Bit#(64) mn_done if(rg_work==1);
+      return rg_rd;
     endmethod
 
   endmodule

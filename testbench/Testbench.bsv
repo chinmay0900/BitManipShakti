@@ -1,28 +1,50 @@
 import ALU ::*;
+import LFSR::*;
+import "BDPI" function Bit#(64) checker (Bit#(64) x, Bit#(64) y);
 
 (*synthesize*)
 module mkTestbench();
   
   Ifc_ALU alu <- mkALU;
+  LFSR #(Bit #(32)) lfsr_rs11 <- mkLFSR_32;
+  LFSR #(Bit #(32)) lfsr_rs12 <- mkLFSR_32;
+  LFSR #(Bit #(32)) lfsr_rs21 <- mkLFSR_32;
+  LFSR #(Bit #(32)) lfsr_rs22 <- mkLFSR_32;
 
   Bit#(5) rg_opcode = 'h00;
-  Bit#(3) rg_funct3 = 'h5;
+  Bit#(3) rg_funct3 = 'h0;
   Bit#(12) rg_imm = 'h030;
-  Bit#(64) rg_rs1 = 'h000000002d402d2f;
-            //Insert the number here ^^
-  Bit#(64) rg_rs2 = 'h000000000f003004;
+  Reg#(Bit#(8)) rg_count <- mkReg(0);
   Reg#(Bool) rg_state <- mkReg(True);
 
-  rule rl_start(rg_state);
-    $display($time, "\tInputs: rs1: %h rs2: %h \n\t\t\topcode: %h funct3: %h imm:%h\n", rg_rs1, rg_rs2, rg_opcode, rg_funct3, rg_imm);
-    alu.ma_start(rg_opcode, rg_funct3, rg_imm, rg_rs1, rg_rs2);
-    rg_state <= False;
+  rule rl_init(rg_count == 0);
+      lfsr_rs11.seed('h241c43);
+      lfsr_rs12.seed('h651387);
+      lfsr_rs21.seed('h4c9208);
+      lfsr_rs22.seed('h523b5a);
+      rg_count <= 1;
   endrule
 
-  rule rl_store;
+  rule rl_start(rg_state && rg_count!=0);
+    Bit#(64) rs1;
+    Bit#(64) rs2;
+    rs1 = {lfsr_rs11.value,lfsr_rs12.value};
+    rs2 = {lfsr_rs21.value,lfsr_rs22.value};
+    $display($time, "\tInputs: rs1: %h rs2: %h \n\t\t\topcode: %h funct3: %h imm:%h\n", rs1, rs2, rg_opcode, rg_funct3, rg_imm);
+    alu.ma_start(rg_opcode, rg_funct3, rg_imm, rs1, rs2);
+    lfsr_rs11.next();
+    lfsr_rs12.next();
+    lfsr_rs21.next();
+    lfsr_rs22.next();
+    rg_state <= False;
+    rg_count <= rg_count + 1; 
+  endrule
+
+  rule rl_store(!rg_state);
     let rd = alu.mn_done;
     $display($time,"\tOutput:Hex-%h or Dec-%d\n", rd, rd);
-    $finish;
+    rg_state <= True;
+    if(rg_count == 100) $finish;
   endrule
 
 endmodule

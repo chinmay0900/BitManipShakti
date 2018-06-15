@@ -1,17 +1,17 @@
 package btdeposit;
 
-  interface Ifc_btdeposit;
-    method Action ma_start(Bit #(64) rs1, Bit#(64) rs2);
-    method Bit#(64) mn_done;
+  interface Ifc_btdeposit#(type size_t);
+    method Action ma_start(Bit #(size_t) rs1, Bit#(size_t) rs2);
+    method Bit#(size_t) mn_done;
   endinterface
 
-  module mkbtdeposit(Ifc_btdeposit);
+  module mkbtdeposit(Ifc_btdeposit#(size_t));
 
-    Reg#(Bit#(64)) rg_x <- mkRegU();
-    Reg#(Bit#(64)) rg_y <- mkRegU();
-    Reg#(Bit#(64)) rg_work <- mkReg(0);
-    Reg#(Bit#(64)) rg_count <- mkReg(0);
-    Reg#(Bit#(64)) rg_m <- mkReg(1);
+    Reg#(Bit#(size_t)) rg_x <- mkRegU();
+    Reg#(Bit#(size_t)) rg_y <- mkRegU();
+    Reg#(Bit#(size_t)) rg_work <- mkReg(0);
+    Reg#(Bit#(size_t)) rg_count <- mkReg(0);
+    Reg#(Bit#(size_t)) rg_m <- mkReg(1);
     
     rule rl_putbtdeposit(rg_work == 1);
       if((rg_x & (rg_m)) > 0) rg_count <= rg_count | (rg_y & -rg_y);
@@ -20,13 +20,13 @@ package btdeposit;
       if (rg_y == 0) rg_work <= 2;
     endrule
     
-    method Action ma_start(Bit#(64) rs1, Bit#(64) rs2) if(rg_work == 0); 
+    method Action ma_start(Bit#(size_t) rs1, Bit#(size_t) rs2) if(rg_work == 0); 
       rg_work <= 1;
       rg_x <= rs1;
       rg_y <= rs2;
     endmethod
 
-    method Bit#(64) mn_done if(rg_work==2);
+    method Bit#(size_t) mn_done if(rg_work==2);
       return rg_count;
     endmethod
 

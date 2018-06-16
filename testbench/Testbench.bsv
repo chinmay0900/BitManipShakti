@@ -12,7 +12,7 @@ module mkTestbench();
   LFSR #(Bit #(32)) lfsr_rs22 <- mkLFSR_32;
 
   Bit#(5) rg_opcode = 'h00;
-  Bit#(3) rg_funct3 = 'h0;
+  Bit#(3) rg_funct3 = 'h6;
   Bit#(12) rg_imm = 'h030;
   Reg#(Bit#(8)) rg_count <- mkReg(0);
   Reg#(Bool) rg_state <- mkReg(True);
@@ -25,7 +25,7 @@ module mkTestbench();
       rg_count <= 1;
   endrule
 
-  rule rl_start(rg_state && rg_count!=0);
+  rule rl_start(rg_count != 0);
     Bit#(64) rs1;
     Bit#(64) rs2;
     rs1 = {lfsr_rs11.value,lfsr_rs12.value};
@@ -36,14 +36,14 @@ module mkTestbench();
     lfsr_rs12.next();
     lfsr_rs21.next();
     lfsr_rs22.next();
-    rg_state <= False;
+    //rg_state <= False;
     rg_count <= rg_count + 1; 
   endrule
 
-  rule rl_store(!rg_state);
+  rule rl_store(rg_count > 1);
     let rd = alu.mn_done;
     $display($time,"\tOutput:Hex-%h or Dec-%d\n", rd, rd);
-    rg_state <= True;
+    //rg_state <= True;
     if(rg_count == 100) $finish;
   endrule
 

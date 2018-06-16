@@ -90,8 +90,8 @@ package ALU;
         if(funct3 == 1) f = rs1;
         rg_rd <= zeroExtend(pack(countZerosLSB(f)));
       end
-      if(opcode == 0 && funct3 == 6) begin
-        if(rs2[0] == 1 && n == 64) begin
+      if(opcode == 0 && funct3 == 6) begin //gzip
+        if(rs2[0] == 1) begin
           if(rs2[1] == 1) a = (rs1 & 'h9999999999999999) | (((rs1 << 1) & 'h4444444444444444) | ((rs1 >> 1) & 'h2222222222222222));
           else a = rs1;
           if(rs2[2] == 1) b = (a & 'hc3c3c3c3c3c3c3c3) | (((a << 2) & 'h3030303030303030) | ((a >> 2) & 'h0c0c0c0c0c0c0c0c));
@@ -104,7 +104,7 @@ package ALU;
           else e = d;
         rg_rd <= e;
         end  
-          else if(rs2[0] == 0 && n == 64) begin
+          else begin
           if(rs2[5] == 1) a = (rs1 & 'hffff00000000ffff) | (((rs1 << 16) & 'h0000ffff00000000) | ((rs1 >> 16) & 'h00000000ffff0000));
           else a = rs1;
           if(rs2[4] == 1) b = (a & 'hff0000ffff0000ff) | (((a << 8) & 'h00ff000000ff0000) | ((a >> 8) & 'h0000ff000000ff00));

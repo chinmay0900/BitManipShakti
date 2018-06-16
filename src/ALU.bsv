@@ -22,6 +22,7 @@ package ALU;
 //opcode OP-IMM = 0 funct3 = 4 imm = 8**: SROI
 //opcode OP-IMM = 0 funct3 = 3 imm = c**: RORI
 //opcode OP-IMM = 0 funct3 = 5 : GREVI
+//opcode OP-IMM = 0 funct3 = 6 : GZIP
 
 //opcode OP = 1 funct3 = 0 : ANDC
 //opcode OP = 1 funct3 = 1 imm = 8**: SRO
@@ -88,6 +89,34 @@ package ALU;
       if(opcode == 0 && (funct3 == 1 || funct3 == 0)) begin
         if(funct3 == 1) f = rs1;
         rg_rd <= zeroExtend(pack(countZerosLSB(f)));
+      end
+      if(opcode == 0 && funct3 == 6) begin
+        if(rs2[0] == 1 && n == 64) begin
+          if(rs2[1] == 1) a = (rs1 & 'h9999999999999999) | (((rs1 << 1) & 'h4444444444444444) | ((rs1 >> 1) & 'h2222222222222222));
+          else a = rs1;
+          if(rs2[2] == 1) b = (a & 'hc3c3c3c3c3c3c3c3) | (((a << 2) & 'h3030303030303030) | ((a >> 2) & 'h0c0c0c0c0c0c0c0c));
+          else b = a;
+          if(rs2[3] == 1) c = (b & 'hf00ff00ff00ff00f) | (((b << 4) & 'h0f000f000f000f00) | ((b >> 4) & 'h00f000f000f000f0));
+          else c = b;
+          if(rs2[4] == 1) d = (c & 'hff0000ffff0000ff) | (((c << 8) & 'h00ff000000ff0000) | ((c >> 8) & 'h0000ff000000ff00));
+          else d = c;
+          if(rs2[5] == 1) e = (d & 'hffff00000000ffff) | (((d << 16) & 'h0000ffff00000000) | ((d >> 16) & 'h00000000ffff0000));
+          else e = d;
+        rg_rd <= e;
+        end  
+          else if(rs2[0] == 0 && n == 64) begin
+          if(rs2[5] == 1) a = (rs1 & 'hffff00000000ffff) | (((rs1 << 16) & 'h0000ffff00000000) | ((rs1 >> 16) & 'h00000000ffff0000));
+          else a = rs1;
+          if(rs2[4] == 1) b = (a & 'hff0000ffff0000ff) | (((a << 8) & 'h00ff000000ff0000) | ((a >> 8) & 'h0000ff000000ff00));
+          else b = a;
+          if(rs2[3] == 1) c = (b & 'hf00ff00ff00ff00f) | (((b << 4) & 'h0f000f000f000f00) | ((b >> 4) & 'h00f000f000f000f0));
+          else c = b;
+          if(rs2[2] == 1) d = (c & 'hc3c3c3c3c3c3c3c3) | (((c << 2) & 'h3030303030303030) | ((c >> 2) & 'h0c0c0c0c0c0c0c0c));
+          else d = c;
+          if(rs2[1] == 1) e = (d & 'h9999999999999999) | (((d << 1) & 'h4444444444444444) | ((d >> 1) & 'h2222222222222222));
+          else e = d;
+        rg_rd <= e;
+        end
       end
       if(opcode == 1 && funct3 == 4) begin //bit extract
         rg_x <= rs1; 

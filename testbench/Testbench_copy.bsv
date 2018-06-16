@@ -30,14 +30,14 @@ module mkTestbench_copy(Empty);
 
   
 
-  Reg#(Bit#(8)) rg_opcode <- mkReg(0);
+  Reg#(Bit#(8)) rg_opcode <- mkReg(11);
       //Change opcode here to execute lzcounter(0) or tzcounter(1) or
       //greverse(2) or countsetbits(3) or andwithc (4) or shiftoneleft(5) or 
       //shiftoneright(6) or rotateleft(7) or rotateright(8) or btextract(9)
       //or btdeposit(10) or gzip(11)
   Reg#(Bit#(N)) rg_rs1 <- mkReg('h05452390);
             //Insert the number here ^^
-  Reg#(Bit#(N)) rg_rs2 <- mkReg('h23f56700);
+  Reg#(Bit#(N)) rg_rs2 <- mkReg('h23f5670f);
   Reg#(Bit#(N)) rg_rd <- mkReg(0);
   Reg#(Bit#(N)) rg_state<-mkReg(0);
 

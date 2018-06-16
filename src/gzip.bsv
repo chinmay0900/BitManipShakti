@@ -14,7 +14,6 @@ package gzip;
 
     method Action ma_start(Bit #(size_t) rs1,Bit #(size_t) rs2) if(rg_work == 0);
       Bit#(size_t) a = 0, b = 0, c = 0, d = 0, e = 0;
-      rg_work <= 1;
       if(rs2[0] == 1 && n == 64) begin
         if(rs2[1] == 1) a = (rs1 & 'h9999999999999999) | (((rs1 << 1) & 'h4444444444444444) | ((rs1 >> 1) & 'h2222222222222222));
         else a = rs1;

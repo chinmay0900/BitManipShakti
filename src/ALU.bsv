@@ -6,6 +6,14 @@ package ALU;
     method Bit#(64) mn_done;
   endinterface
 
+   function Bit#(64) reverse(Bit#(64) src, Bit#(64) sl, Bit#(64) sr, Bit#(64) num);
+     return (((src & sl) << num) | ((src & sr) >> num));
+   endfunction
+
+   function Bit#(64) g_zip(Bit#(64) src, Bit#(64) sl, Bit#(64) sr, Bit#(64) num);
+     return ((src & (~(sl | sr))) | ((src << num) & sl) | ((src >> num) & sr));
+   endfunction
+
   module mkALU(Ifc_ALU);
 
     Reg#(Bit#(64)) rg_rd <- mkReg(0);
@@ -14,6 +22,7 @@ package ALU;
     Reg#(Bit#(64)) rg_x <- mkReg(0);
     Reg#(Bit#(64)) rg_y <- mkReg(0);
     Reg#(Bit#(2)) rg_depext <- mkReg(0);
+    Reg#(Bit#(64)) rg_des <- mkReg(0);
 
 //opcode OP-IMM = 0 funct3 = 0 : CLZ
 //opcode OP-IMM = 0 funct3 = 1 : CTZ
@@ -72,17 +81,17 @@ package ALU;
       if((opcode == 1 && funct3 == 3)||(opcode == 0 && (funct3 == 5 || funct3 == 0))) begin //grev and grevi
         if(opcode == 0 && funct3 == 0) rs2 = 'h00000000000000ff;
         if(opcode == 0 && funct3 == 5) rs2 = zeroExtend(imm);
-        if(rs2[0] == 1) a = ((rs1&64'h5555555555555555)<<1)|((rs1&64'hAAAAAAAAAAAAAAAA)>>1);
+        if(rs2[0] == 1) a = reverse(rs1, 64'h5555555555555555, 64'hAAAAAAAAAAAAAAAA, 1);
         else a = rs1;
-        if(rs2[1] == 1) b = ((a&64'h3333333333333333)<<2)|((a&64'hCCCCCCCCCCCCCCCC)>>2);
+        if(rs2[1] == 1) b = reverse(a, 64'h3333333333333333, 64'hCCCCCCCCCCCCCCCC, 2);
         else b = a;
-        if(rs2[2] == 1) c = ((b&64'h0F0F0F0F0F0F0F0F)<<4)|((b&64'hF0F0F0F0F0F0F0F0)>>4);
+        if(rs2[2] == 1) c = reverse(b, 64'h0F0F0F0F0F0F0F0F, 64'hF0F0F0F0F0F0F0F0, 4);
         else c = b;
-        if(rs2[3] == 1) d = ((c&64'h00FF00FF00FF00FF)<<8)|((c&64'hFF00FF00FF00FF00)>>8);
+        if(rs2[3] == 1) d = reverse(c, 64'h00FF00FF00FF00FF, 64'hFF00FF00FF00FF00, 8);
         else d = c;
-        if(rs2[4] == 1) e = ((d&64'h0000FFFF0000FFFF)<<16)|((d&64'hFFFF0000FFFF0000)>>16);
+        if(rs2[4] == 1) e = reverse(d, 64'h0000FFFF0000FFFF, 64'hFFFF0000FFFF0000, 16);
         else e = d;
-        if(rs2[5] == 1) f = ((e&64'h00000000FFFFFFFF)<<32)|((e&64'hFFFFFFFF00000000)>>32);
+        if(rs2[5] == 1) f = reverse(e, 64'h00000000FFFFFFFF, 64'hFFFFFFFF00000000, 32);
         else f = e;
         if(funct3 != 0) rg_rd <= f;
       end
@@ -92,28 +101,28 @@ package ALU;
       end
       if(opcode == 0 && funct3 == 6) begin //gzip
         if(rs2[0] == 1) begin
-          if(rs2[1] == 1) a = (rs1 & 'h9999999999999999) | (((rs1 << 1) & 'h4444444444444444) | ((rs1 >> 1) & 'h2222222222222222));
+          if(rs2[1] == 1) a = g_zip(rs1, 64'h4444444444444444, 64'h2222222222222222, 1);
           else a = rs1;
-          if(rs2[2] == 1) b = (a & 'hc3c3c3c3c3c3c3c3) | (((a << 2) & 'h3030303030303030) | ((a >> 2) & 'h0c0c0c0c0c0c0c0c));
+          if(rs2[2] == 1) b = g_zip(a, 64'h3030303030303030, 64'h0c0c0c0c0c0c0c0c, 2);
           else b = a;
-          if(rs2[3] == 1) c = (b & 'hf00ff00ff00ff00f) | (((b << 4) & 'h0f000f000f000f00) | ((b >> 4) & 'h00f000f000f000f0));
+          if(rs2[3] == 1) c = g_zip(b, 64'h0f000f000f000f00, 64'h00f000f000f000f0, 4);
           else c = b;
-          if(rs2[4] == 1) d = (c & 'hff0000ffff0000ff) | (((c << 8) & 'h00ff000000ff0000) | ((c >> 8) & 'h0000ff000000ff00));
+          if(rs2[4] == 1) d = g_zip(c, 64'h00ff000000ff0000, 64'h0000ff000000ff00, 8);
           else d = c;
-          if(rs2[5] == 1) e = (d & 'hffff00000000ffff) | (((d << 16) & 'h0000ffff00000000) | ((d >> 16) & 'h00000000ffff0000));
+          if(rs2[5] == 1) e = g_zip(d, 64'h0000ffff00000000, 64'h00000000ffff0000, 16);
           else e = d;
         rg_rd <= e;
         end  
           else begin
-          if(rs2[5] == 1) a = (rs1 & 'hffff00000000ffff) | (((rs1 << 16) & 'h0000ffff00000000) | ((rs1 >> 16) & 'h00000000ffff0000));
+          if(rs2[5] == 1) a = g_zip(rs1, 64'h0000ffff00000000, 64'h00000000ffff0000, 16);
           else a = rs1;
-          if(rs2[4] == 1) b = (a & 'hff0000ffff0000ff) | (((a << 8) & 'h00ff000000ff0000) | ((a >> 8) & 'h0000ff000000ff00));
+          if(rs2[4] == 1) b = g_zip(a, 64'h00ff000000ff0000, 64'h0000ff000000ff00, 8);
           else b = a;
-          if(rs2[3] == 1) c = (b & 'hf00ff00ff00ff00f) | (((b << 4) & 'h0f000f000f000f00) | ((b >> 4) & 'h00f000f000f000f0));
+          if(rs2[3] == 1) c = g_zip(b, 64'h0f000f000f000f00, 64'h00f000f000f000f0, 4);
           else c = b;
-          if(rs2[2] == 1) d = (c & 'hc3c3c3c3c3c3c3c3) | (((c << 2) & 'h3030303030303030) | ((c >> 2) & 'h0c0c0c0c0c0c0c0c));
+          if(rs2[2] == 1) d = g_zip(c, 64'h3030303030303030, 64'h0c0c0c0c0c0c0c0c, 2);
           else d = c;
-          if(rs2[1] == 1) e = (d & 'h9999999999999999) | (((d << 1) & 'h4444444444444444) | ((d >> 1) & 'h2222222222222222));
+          if(rs2[1] == 1) e = g_zip(d, 64'h4444444444444444, 64'h2222222222222222, 1);
           else e = d;
         rg_rd <= e;
         end
@@ -135,7 +144,11 @@ package ALU;
       return rg_rd;
     endmethod
 
+   //(*noinline*)
+
 
   endmodule
+
+
 
 endpackage

@@ -1,17 +1,11 @@
 #include<stdio.h>
 
-unsigned long long gzipstage(unsigned long long src, unsigned long long maskL, unsigned long long maskR, unsigned int N)
-{
-  unsigned long long x = src & ~(maskL | maskR);
-  x |= ((src << N) & maskL) | ((src >> N) & maskR);
- return x;
-}
-
 unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned int imm, unsigned long long rs1, unsigned long long rs2)
 {
 
   unsigned char shamt = rs2 & (63);
   unsigned long long x = rs1;
+  unsigned int  y = imm & 0xc00;
   
   if(opcode == 0 && funct3 == 2)//pcnt
     {
@@ -24,17 +18,17 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
   if(opcode == 1 && funct3 == 0)//andc
     return rs1 & ~rs2;
 
-  if((opcode == 1 && funct3 == 1 && imm[11:10] == 2) || (opcode == 0 && funct3 == 4 && imm[11:10] == 2))//sro sroi
-    return ~(~rs1 >> shamt);
+  if((opcode == 1 && funct3 == 1 && y == 0x800) || (opcode == 0 && funct3 == 4 && y == 0x800))//sro sroi
+    return (~(~rs1 >> shamt));
 
-  if((opcode == 1 && funct3 == 2 && imm[11:10] == 2) || (opcode == 0 && funct3 == 3 && imm[11:10] == 2))//slo sloi
-    return ~(~rs1 >> shamt);
+  if((opcode == 1 && funct3 == 2 && y == 0x800) || (opcode == 0 && funct3 == 3 && y == 0x800))//slo sloi
+    return (~(~rs1 >> shamt));
 
-  if((opcode == 1 && funct3 == 1 && imm[11:10] == 3) || (opcode == 0 && funct3 == 3 && imm[11:10] == 3))//ror rori
-    return (rs1 >> shamt) | (rs1 << (63 - shamt));
+  if((opcode == 1 && funct3 == 1 && y == 0xc00) || (opcode == 0 && funct3 == 3 && y == 0xc00))//ror rori
+    return ((rs1 >> shamt) | (rs1 << (63 - shamt)));
 
-  if(opcode == 1 && funct3 == 2 && imm[11:10] == 3)//rol
-    return (rs1 << shamt) | (rs1 >> (63 - shamt));
+  if(opcode == 1 && funct3 == 2 && y == 3)//rol
+    return ((rs1 << shamt) | (rs1 >> (63 - shamt)));
 
   if((opcode == 1 && funct3 == 3)||(opcode == 0 && (funct3 == 5 || funct3 == 0)))//grev grevi
     {
@@ -60,29 +54,29 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
       if(shamt & 1)
         {
           if(shamt & 2)
-            x = gzipstage(x,0x4444444444444444,0x2222222222222222,1);
+            x = (x & 0x9999999999999999) | (((x << 1) & 0x4444444444444444) | ((x >> 1) & 0x2222222222222222));
           if(shamt & 4)
-            x = gzipstage(x,0x3030303030303030,0x0c0c0c0c0c0c0c0c,2);
+            x = (x & 0xc3c3c3c3c3c3c3c3) | (((x << 2) & 0x3030303030303030) | ((x >> 2) & 0x0c0c0c0c0c0c0c0c));
           if(shamt & 8)
-            x = gzipstage(x,0x0f000f000f000f00,0x00f000f000f000f0,4);
+            x = (x & 0xf00ff00ff00ff00f) | (((x << 4) & 0x0f000f000f000f00) | ((x >> 4) & 0x00f000f000f000f0));
           if(shamt & 16)
-            x = gzipsatge(x,0x00ff000000ff0000,0x0000ff000000ff00,8);
+            x = (x & 0xff0000ffff0000ff) | (((x << 8) & 0x00ff000000ff0000) | ((x >> 8) & 0x0000ff000000ff00));
           if(shamt & 32)
-            x = gzipstage(x,0x0000ffff00000000,0x00000000ffff0000,16);
+            x = (x & 0xffff00000000ffff) | (((x << 16) & 0x0000ffff00000000) | ((x >> 16) & 0x00000000ffff0000));
         }
 
       else
         {  
           if(shamt & 32)
-            x = gzipstage(x,0x0000ffff00000000,0x00000000ffff0000,16);
+            x = (x & 0xffff00000000ffff) | (((x << 16) & 0x0000ffff00000000) | ((x >> 16) & 0x00000000ffff0000));
           if(shamt & 16)
-            x = gzipsatge(x,0x00ff000000ff0000,0x0000ff000000ff00,8);
+            x = (x & 0xff0000ffff0000ff) | (((x << 8) & 0x00ff000000ff0000) | ((x >> 8) & 0x0000ff000000ff00));
           if(shamt & 8)
-            x = gzipstage(x,0x0f000f000f000f00,0x00f000f000f000f0,4);
+            x = (x & 0xf00ff00ff00ff00f) | (((x << 4) & 0x0f000f000f000f00) | ((x >> 4) & 0x00f000f000f000f0));
           if(shamt & 4)
-            x = gzipstage(x,0x3030303030303030,0x0c0c0c0c0c0c0c0c,2);
+            x = (x & 0xc3c3c3c3c3c3c3c3) | (((x << 2) & 0x3030303030303030) | ((x >> 2) & 0x0c0c0c0c0c0c0c0c));
           if(shamt & 2)
-            x = gzipstage(x,0x4444444444444444,0x2222222222222222,1);      
+            x = (x & 0x9999999999999999) | (((x << 1) & 0x4444444444444444) | ((x >> 1) & 0x2222222222222222));      
         }
 
       return x;
@@ -95,7 +89,7 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
        if ((rs2 >> i) & 1) 
          {
           if ((rs1 >> i) & 1)
-            r |= unsigned long long(1) << j;
+            r = r | ((0x1) << j);
             j++;
          }
      return r;
@@ -108,7 +102,7 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
         if ((rs2 >> i) & 1) 
           {
            if ((rs1 >> j) & 1)
-           r |= unsigned long long(1) << i;
+           r = r | ((0x1) << i);
            j++;
           }
       return r;

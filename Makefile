@@ -24,7 +24,7 @@ compile:
 link:
 	@echo Linking $(TOP_MODULE)...
 	@mkdir -p bin
-	@bsc -e $(TOP_MODULE) -sim -o ./bin/out -simdir $(BSVBUILDDIR) -p .:%/Prelude:%/Libraries:%/Libraries/BlueNoC:./c_file -keep-fires -bdir $(BSVBUILDDIR) ./c_files/checker.c
+	@bsc -e $(TOP_MODULE) -sim -o ./bin/out -simdir $(BSVBUILDDIR) -p .:%/Prelude:%/Libraries:%/Libraries/BlueNoC:./c_files -keep-fires -bdir $(BSVBUILDDIR) ./c_files/checker.c
 	#@bsc -e $(TOP_MODULE) -sim -o ./bin/out -simdir $(BSVBUILDDIR) -p .:%/Prelude:%/Libraries:%/Libraries/BlueNoC\ -bdir $(BSVBUILDDIR) -keep-fires 
 	@echo Linking finished
 

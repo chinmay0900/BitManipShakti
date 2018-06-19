@@ -6,29 +6,30 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
   unsigned char shamt = rs2 & (63);
   unsigned long long x = rs1;
   unsigned int  y = imm & 0xc00;
+  unsigned long long rd = 0; 
   
   if(opcode == 0 && funct3 == 2)//pcnt
     {
       int count = 0;
       for (int index = 0; index < 64; index++)
          count += (rs1 >> index) & 1;
-      return count;
+      rd = count;
     }
 
   if(opcode == 1 && funct3 == 0)//andc
-    return rs1 & ~rs2;
+    rd = rs1 & ~rs2;
 
   if((opcode == 1 && funct3 == 1 && y == 0x800) || (opcode == 0 && funct3 == 4 && y == 0x800))//sro sroi
-    return (~(~rs1 >> shamt));
+    rd = (~(~rs1 >> shamt));
 
   if((opcode == 1 && funct3 == 2 && y == 0x800) || (opcode == 0 && funct3 == 3 && y == 0x800))//slo sloi
-    return (~(~rs1 >> shamt));
+    rd = (~(~rs1 >> shamt));
 
   if((opcode == 1 && funct3 == 1 && y == 0xc00) || (opcode == 0 && funct3 == 3 && y == 0xc00))//ror rori
-    return ((rs1 >> shamt) | (rs1 << (63 - shamt)));
+    rd = ((rs1 >> shamt) | (rs1 << (63 - shamt)));
 
   if(opcode == 1 && funct3 == 2 && y == 3)//rol
-    return ((rs1 << shamt) | (rs1 >> (63 - shamt)));
+    rd = ((rs1 << shamt) | (rs1 >> (63 - shamt)));
 
   if((opcode == 1 && funct3 == 3)||(opcode == 0 && (funct3 == 5 || funct3 == 0)))//grev grevi
     {
@@ -46,7 +47,7 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
       if(shamt & 32) 
         x = ((x & 0x00000000FFFFFFFF)<<32)|((x & 0xFFFFFFFF00000000)>>32);
 
-      return x;
+      rd = x;
     }
 
   if(opcode == 0 && funct3 == 6)// gzip 
@@ -79,7 +80,7 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
             x = (x & 0x9999999999999999) | (((x << 1) & 0x4444444444444444) | ((x >> 1) & 0x2222222222222222));      
         }
 
-      return x;
+      rd = x;
     }
 
   if(opcode == 1 && funct3 == 4)//bit extract
@@ -92,7 +93,7 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
             r = r | ((0x1) << j);
             j++;
          }
-     return r;
+     rd = r;
     }
 
   else if(opcode == 1 && funct3 == 5)//bit deposit
@@ -105,8 +106,8 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
            r = r | ((0x1) << i);
            j++;
           }
-      return r;
+      rd = r;
     }
   
-
+ return (rd);
 }

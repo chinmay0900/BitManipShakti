@@ -8,7 +8,7 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
   unsigned int  y = imm & 0xc00;
   unsigned long long t = 0x1;
 
-  if(y == 0x800 || y == 0xc00)
+  if(opcode == 0 && (((funct3 == 3|| funct3 == 4) && (y == 0x800 || y == 0xc00)) || funct3 == 5))
 		shamt = imm & (63);
   else	
 		shamt = rs2 & (63);
@@ -44,15 +44,15 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
     rd = (~(~rs1 >> shamt));
 
   if((opcode == 1 && funct3 == 2 && y == 0x800) || (opcode == 0 && funct3 == 3 && y == 0x800))//slo sloi
-    rd = (~(~rs1 >> shamt));
+    rd = (~(~rs1 << shamt));
 
   if((opcode == 1 && funct3 == 1 && y == 0xc00) || (opcode == 0 && funct3 == 3 && y == 0xc00))//ror rori
-    rd = ((rs1 >> shamt) | (rs1 << (63 - shamt)));
+    rd = ((rs1 >> shamt) | (rs1 << (64 - shamt)));
 
-  if(opcode == 1 && funct3 == 2 && y == 3)//rol
-    rd = ((rs1 << shamt) | (rs1 >> (63 - shamt)));
+  if(opcode == 1 && funct3 == 2 && y == 0xc00)//rol
+    rd = ((rs1 << shamt) | (rs1 >> (64 - shamt)));
 
-  if((opcode == 1 && funct3 == 3)||(opcode == 0 && (funct3 == 5 || funct3 == 0)))//grev grevi
+  if((opcode == 1 && funct3 == 3)||(opcode == 0 && (funct3 == 5)))//grev grevi
     {
 
       if(shamt & 1)

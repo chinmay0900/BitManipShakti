@@ -24,17 +24,7 @@ compile:
 link:
 	@echo Linking $(TOP_MODULE)...
 	@mkdir -p bin
-<<<<<<< HEAD
-<<<<<<< HEAD
 	@bsc -e $(TOP_MODULE) -sim -o ./bin/out -simdir $(BSVBUILDDIR) -p .:%/Prelude:%/Libraries:%/Libraries/BlueNoC:./c_files -keep-fires -bdir $(BSVBUILDDIR) -keep-fires ./c_files/checker.c    
-=======
-	@bsc -e $(TOP_MODULE) -sim -o ./bin/out -simdir $(BSVBUILDDIR) -p .:%/Prelude:%/Libraries:%/Libraries/BlueNoC:./c_files -keep-fires -bdir $(BSVBUILDDIR) ./c_files/checker.c
-	#@bsc -e $(TOP_MODULE) -sim -o ./bin/out -simdir $(BSVBUILDDIR) -p .:%/Prelude:%/Libraries:%/Libraries/BlueNoC\ -bdir $(BSVBUILDDIR) -keep-fires 
->>>>>>> 2da8507b9c1ec02bf78d35371562a9d07ac2e972
-=======
-	@bsc -e $(TOP_MODULE) -sim -o ./bin/out -simdir $(BSVBUILDDIR) -p .:%/Prelude:%/Libraries:%/Libraries/BlueNoC:./c_files -keep-fires -bdir $(BSVBUILDDIR) ./c_files/checker.c
-	#@bsc -e $(TOP_MODULE) -sim -o ./bin/out -simdir $(BSVBUILDDIR) -p .:%/Prelude:%/Libraries:%/Libraries/BlueNoC\ -bdir $(BSVBUILDDIR) -keep-fires 
->>>>>>> 2da8507b9c1ec02bf78d35371562a9d07ac2e972
 	@echo Linking finished
 
 .PHONY: generate_verilog 

@@ -47,7 +47,7 @@ module mkTestbench();
     if(rg_checker == rd) $display($time,"\tOutput:Program-%h or Checker-%h\n Passed", rd, rg_checker);
     if(rg_checker != rd) $display($time,"\tOutput:Program-%h or Checker-%h\n Failed", rd, rg_checker);
     //rg_state <= True;
-    if(rg_count == 1000000) $finish;
+    if(rg_count == 100) $finish;
   endrule
 
 endmodule

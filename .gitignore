@@ -5,3 +5,5 @@ bin/
 *.vcd
 
 *.swp
+
+c_files/*.o

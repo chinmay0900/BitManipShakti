@@ -6,8 +6,7 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
   unsigned char shamt;
   unsigned long long x = rs1;
   unsigned int  y = imm & 0xc00;
-<<<<<<< HEAD
-<<<<<<< HEAD
+
   if(y == 0x800 || y == 0xc00)
 		shamt = imm & (63);
   else	
@@ -26,13 +25,9 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
 				{return count;}}
 		return 64;
 		}
-=======
+
   unsigned long long rd = 0; 
->>>>>>> 2da8507b9c1ec02bf78d35371562a9d07ac2e972
-=======
-  unsigned long long rd = 0; 
->>>>>>> 2da8507b9c1ec02bf78d35371562a9d07ac2e972
-  
+
   if(opcode == 0 && funct3 == 2)//pcnt
     {
       int count = 0;
@@ -134,14 +129,6 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
       rd = r;
     }
   
-<<<<<<< HEAD
-<<<<<<< HEAD
-	return 0;
+	return rd;
 
-=======
- return (rd);
->>>>>>> 2da8507b9c1ec02bf78d35371562a9d07ac2e972
-=======
- return (rd);
->>>>>>> 2da8507b9c1ec02bf78d35371562a9d07ac2e972
 }

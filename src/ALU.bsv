@@ -6,14 +6,17 @@ package ALU;
     method Bit#(64) mn_done;
   endinterface
 
+  (*noinline*)
    function Bit#(64) reverse(Bit#(64) src, Bit#(64) sl, Bit#(64) sr, Bit#(64) num);
      return (((src & sl) << num) | ((src & sr) >> num));
    endfunction
 
+  (*noinline*)
    function Bit#(64) gzip_stage(Bit#(64) src, Bit#(64) sl, Bit#(64) sr, Bit#(64) num);
      return ((src & (~(sl | sr))) | ((src << num) & sl) | ((src >> num) & sr));
    endfunction
 
+  (*synthesize*)
   module mkALU(Ifc_ALU);
 
     Reg#(Bit#(64)) rg_rd <- mkReg(0);
@@ -22,7 +25,6 @@ package ALU;
     Reg#(Bit#(64)) rg_x <- mkReg(0);
     Reg#(Bit#(64)) rg_y <- mkReg(0);
     Reg#(Bit#(2)) rg_depext <- mkReg(0);
-    Reg#(Bit#(64)) rg_des <- mkReg(0);
 
 //opcode OP-IMM = 0 funct3 = 0 : CLZ
 //opcode OP-IMM = 0 funct3 = 1 : CTZ
@@ -130,11 +132,15 @@ package ALU;
       if(opcode == 1 && funct3 == 4) begin //bit extract
         rg_x <= rs1; 
         rg_y <= rs2;
+        rg_rd <= 0;
+        rg_m <= 1;
         rg_depext <= 1;
       end
       else if(opcode == 1 && funct3 == 5) begin //bit deposit
         rg_x <= rs1; 
         rg_y <= rs2;
+        rg_rd <= 0;
+        rg_m <= 1;
         rg_depext <= 2;
       end
       else rg_work <= True;
@@ -144,11 +150,6 @@ package ALU;
       return rg_rd;
     endmethod
 
-   //(*noinline*)
-
-
   endmodule
-
-
 
 endpackage

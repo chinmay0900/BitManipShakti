@@ -7,12 +7,12 @@ package ALU;
   endinterface
 
   (*noinline*)
-   function Bit#(64) reverse(Bit#(64) src, Bit#(64) sl, Bit#(64) sr, Bit#(64) num);
+   function Bit#(64) reverse(Bit#(64) src, Bit#(64) sl, Bit#(64) sr, Bit#(6) num);
      return (((src & sl) << num) | ((src & sr) >> num));
    endfunction
 
   (*noinline*)
-   function Bit#(64) gzip_stage(Bit#(64) src, Bit#(64) sl, Bit#(64) sr, Bit#(64) num);
+   function Bit#(64) gzip_stage(Bit#(64) src, Bit#(64) sl, Bit#(64) sr, Bit#(5) num);
      return ((src & (~(sl | sr))) | ((src << num) & sl) | ((src >> num) & sr));
    endfunction
 
@@ -139,32 +139,22 @@ package ALU;
         Bit#(64) u3 = 64'h0f000f000f000f00;
         Bit#(64) u4 = (rs2[0]==1) ? 64'h00ff000000ff0000 : 64'h3030303030303030;
         Bit#(64) u5 = (rs2[0]==1) ? 64'h0000ffff00000000 : 64'h4444444444444444;
-        if(rs2[0] == 1) begin
-          if(rs2[1] == 1) a = gzip_stage(rs1, 64'h4444444444444444, 64'h2222222222222222, 1);
-          else a = rs1;
-          if(rs2[2] == 1) b = gzip_stage(a, 64'h3030303030303030, 64'h0c0c0c0c0c0c0c0c, 2);
-          else b = a;
-          if(rs2[3] == 1) c = gzip_stage(b, 64'h0f000f000f000f00, 64'h00f000f000f000f0, 4);
-          else c = b;
-          if(rs2[4] == 1) d = gzip_stage(c, 64'h00ff000000ff0000, 64'h0000ff000000ff00, 8);
-          else d = c;
-          if(rs2[5] == 1) e = gzip_stage(d, 64'h0000ffff00000000, 64'h00000000ffff0000, 16);
-          else e = d;
+	Bit#(1) flag = (rs2[0]==1) ? 1 : 0;
+	Bit#(5) w1 = (rs2[0]==1) ? 1:16; 
+	Bit#(5) w2 = (rs2[0]==1) ? 2:8; 
+	Bit#(5) w3 = (rs2[0]==1) ? 8:2; 
+	Bit#(5) w4 = (rs2[0]==1) ? 16:1; 
+        if((rs2[1] == 1&&flag==1)||(rs2[5]==1&&flag==0)) a = gzip_stage(rs1, u1, v1, w1);
+        else a = rs1;
+        if((rs2[2] == 1&&flag==1)||(rs2[4]==1&&flag==0)) b = gzip_stage(a, u2, v2, w2);
+        else b = a;
+        if(rs2[3] == 1) c = gzip_stage(b, u3, v3, 4);
+        else c = b;
+        if((rs2[4] == 1&&flag==1)||(rs2[2]==1&&flag==0)) d = gzip_stage(c, u4, v4, w3);
+        else d = c;
+        if((rs2[5] == 1&&flag==1)||(rs2[1]==1&&flag==0)) e = gzip_stage(d, u5, v5, w4);
+        else e = d;
         rg_rd <= e;
-        end  
-          else begin
-          if(rs2[5] == 1) a = gzip_stage(rs1, 64'h0000ffff00000000, 64'h00000000ffff0000, 16);
-          else a = rs1;
-          if(rs2[4] == 1) b = gzip_stage(a, 64'h00ff000000ff0000, 64'h0000ff000000ff00, 8);
-          else b = a;
-          if(rs2[3] == 1) c = gzip_stage(b, 64'h0f000f000f000f00, 64'h00f000f000f000f0, 4);
-          else c = b;
-          if(rs2[2] == 1) d = gzip_stage(c, 64'h3030303030303030, 64'h0c0c0c0c0c0c0c0c, 2);
-          else d = c;
-          if(rs2[1] == 1) e = gzip_stage(d, 64'h4444444444444444, 64'h2222222222222222, 1);
-          else e = d;
-        rg_rd <= e;
-        end
         rg_work <= True;
       end
       else if(opcode == 1 && funct3 == 4) begin //bit extract

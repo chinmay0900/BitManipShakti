@@ -73,11 +73,16 @@ package ALU;
         'h042, 'h032, 'h033 : shamt = truncate(imm);
       endcase
 
+     // $display("\nfunsel : %h or %b\n",funsel, funsel);
+
+      case(funsel) matches
+        'h00?_ : rg_rd <= zeroExtend(pack(countZerosMSB(rs1)));
+        'h01?_ : rg_rd <= zeroExtend(pack(countZerosLSB(rs1)));
+        'h02?_ : rg_rd <= zeroExtend(pack(countOnes(rs1))); 
+        'h08?_ : rg_rd <= (rs1 & ~rs2);
+      endcase
+
       case(funsel)
-        'h00_ : rg_rd <= zeroExtend(pack(countZerosMSB(rs1)));
-        'h01_ : rg_rd <= zeroExtend(pack(countZerosLSB(rs1)));
-        'h02_ : rg_rd <= zeroExtend(pack(countOnes(rs1))); 
-        'h08_ : rg_rd <= (rs1 & ~rs2);
         'h092, 'h042 : rg_rd <= ~(~rs1 >> shamt); //sro sroi
         'h0a2, 'h032 : rg_rd <= ~(~rs1 << shamt); //slo sloi
         'h093, 'h033, 'h0a3 : rg_rd <= ((rs1 >> shamt) | (rs1 << (64 - {1'b0,shamt}))); //ror rori rol
@@ -117,12 +122,13 @@ package ALU;
         else f = e;
         //if(funct3 != 0)
         rg_rd <= f;
+        rg_work <= True;
       end
       //if(opcode == 0 && (funct3 == 1 || funct3 == 0)) begin
       //  if(funct3 == 1) f = rs1;
       //  rg_rd <= zeroExtend(pack(countZerosLSB(f)));
       //end
-      if(opcode == 0 && funct3 == 6) begin //gzip
+      else if(opcode == 0 && funct3 == 6) begin //gzip
         Bit#(64) v1 = (rs2[0]==1) ? 64'h2222222222222222 : 64'h00000000ffff0000;
         Bit#(64) v2 = (rs2[0]==1) ? 64'h0c0c0c0c0c0c0c0c : 64'h0000ff000000ff00;
         Bit#(64) v3 = 64'h00f000f000f000f0;
@@ -159,8 +165,9 @@ package ALU;
           else e = d;
         rg_rd <= e;
         end
+        rg_work <= True;
       end
-      if(opcode == 1 && funct3 == 4) begin //bit extract
+      else if(opcode == 1 && funct3 == 4) begin //bit extract
         rg_x <= rs1; 
         rg_y <= rs2;
         rg_rd <= 0;

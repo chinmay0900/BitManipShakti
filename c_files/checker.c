@@ -3,10 +3,35 @@
 unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned int imm, unsigned long long rs1, unsigned long long rs2)
 {
 
-  unsigned char shamt = rs2 & (63);
+  unsigned char shamt;
   unsigned long long x = rs1;
   unsigned int  y = imm & 0xc00;
+<<<<<<< HEAD
+<<<<<<< HEAD
+  if(y == 0x800 || y == 0xc00)
+		shamt = imm & (63);
+  else	
+		shamt = rs2 & (63);
+
+  if(opcode == 0 && funct3 == 0)
+    {for (int count = 0; count < 64; count++)
+			{if ((rs1 << count) >> (63))
+				{return count;}}
+		return 64;
+		}
+
+	if(opcode == 0 && funct3 == 1)
+		{for (int count = 0; count < 64; count++)
+			{if ((rs1 >> count) & 1)
+				{return count;}}
+		return 64;
+		}
+=======
   unsigned long long rd = 0; 
+>>>>>>> 2da8507b9c1ec02bf78d35371562a9d07ac2e972
+=======
+  unsigned long long rd = 0; 
+>>>>>>> 2da8507b9c1ec02bf78d35371562a9d07ac2e972
   
   if(opcode == 0 && funct3 == 2)//pcnt
     {
@@ -90,7 +115,7 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
        if ((rs2 >> i) & 1) 
          {
           if ((rs1 >> i) & 1)
-            r = r | ((0x1) << j);
+            { r = r | ((0x1) << j); }
             j++;
          }
      rd = r;
@@ -103,11 +128,20 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
         if ((rs2 >> i) & 1) 
           {
            if ((rs1 >> j) & 1)
-           r = r | ((0x1) << i);
+           { r = r | ((0x1) << i); }
            j++;
           }
       rd = r;
     }
   
+<<<<<<< HEAD
+<<<<<<< HEAD
+	return 0;
+
+=======
  return (rd);
+>>>>>>> 2da8507b9c1ec02bf78d35371562a9d07ac2e972
+=======
+ return (rd);
+>>>>>>> 2da8507b9c1ec02bf78d35371562a9d07ac2e972
 }

@@ -6,6 +6,7 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
   unsigned char shamt;
   unsigned long long x = rs1;
   unsigned int  y = imm & 0xc00;
+  unsigned long long t = 0x1;
 
   if(y == 0x800 || y == 0xc00)
 		shamt = imm & (63);
@@ -110,7 +111,7 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
        if ((rs2 >> i) & 1) 
          {
           if ((rs1 >> i) & 1)
-            { r = r | ((0x1) << j); }
+            { r = r | (t << j); }
             j++;
          }
      rd = r;
@@ -123,7 +124,7 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
         if ((rs2 >> i) & 1) 
           {
            if ((rs1 >> j) & 1)
-           { r = r | ((0x1) << i); }
+           { r = r | (t << i); }
            j++;
           }
       rd = r;

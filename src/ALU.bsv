@@ -58,30 +58,50 @@ package ALU;
     method Action ma_start(Bit#(5) opcode, Bit#(3) funct3, Bit#(12) imm, Bit#(64) rs1, Bit#(64)
     rs2)if(rg_depext==0); 
       Bit#(64) a = 0, b = 0, c = 0, d = 0, e = 0, f = 0;
+      Bit#(12) funsel = {opcode,funct3,'b00,imm[11:10]};
+      Bit#(6) shamt = 0;
 
       //if(opcode == 0 && (funct3 == 0 || funct3 == 1)) begin //clz ctz
-      //  if(funct3 == 0) f = reverseBits(rs1);
+      // if(funct3 == 0) f = reverseBits(rs1);
       //  else f = rs1;
       //  rg_rd <= zeroExtend(pack(countZerosLSB(f)));
       //end
+
+      case(funsel)
+        'h092,'h0a2, 'h093 : shamt = truncate(rs2);
+        'h0a3 : shamt = truncate('h40 - rs2);
+        'h042, 'h032, 'h033 : shamt = truncate(imm);
+      endcase
+
+      case(funsel)
+        'h00_ : rg_rd <= zeroExtend(pack(countZerosMSB(rs1)));
+        'h01_ : rg_rd <= zeroExtend(pack(countZerosLSB(rs1)));
+        'h02_ : rg_rd <= zeroExtend(pack(countOnes(rs1))); 
+        'h08_ : rg_rd <= (rs1 & ~rs2);
+        'h092, 'h042 : rg_rd <= ~(~rs1 >> shamt); //sro sroi
+        'h0a2, 'h032 : rg_rd <= ~(~rs1 << shamt); //slo sloi
+        'h093, 'h033, 'h0a3 : rg_rd <= ((rs1 >> shamt) | (rs1 << (64 - {1'b0,shamt}))); //ror rori rol
+      endcase
+
       //if(opcode == 0 && funct3 == 0) rg_rd <= zeroExtend(pack(countZerosMSB(rs1)));
-      if(opcode == 0 && funct3 == 2) rg_rd <= zeroExtend(pack(countOnes(rs1))); //pcnt
-      if(opcode == 1 && funct3 == 0) rg_rd <= (rs1 & ~rs2); //andc
-      if((opcode == 1 && funct3 == 1 && imm[11:10] == 2) || (opcode == 0 && funct3 == 4 && imm[11:10] == 2)) begin //sro sroi
-        if (opcode == 0 && funct3 == 4 && imm[11:10] == 2) rs2 = zeroExtend(imm);
-        rg_rd <= ~(~rs1 >> (rs2 & 63)); //sro
-      end
-      if((opcode == 1 && funct3 == 2 && imm[11:10] == 2) || (opcode == 0 && funct3 == 3 && imm[11:10] == 2)) begin //slo sloi
-        if (opcode == 0 && funct3 == 3 && imm[11:10] == 2) rs2 = zeroExtend(imm);
-        rg_rd <= ~(~rs1 << (rs2 & 63)); //slo
-      end
-      if((opcode == 1 && funct3 == 1 && imm[11:10] == 3) || (opcode == 0 && funct3 == 3 && imm[11:10] == 3)) begin //ror rori
-        if (opcode == 0 && funct3 == 3 && imm[11:10] == 3) rs2 = zeroExtend(imm);
-        rg_rd <= ((rs1 >> (rs2 & 63)) | (rs1 << (64 - (rs2 & 63)))); 
-      end
-      if(opcode == 1 && funct3 == 2 && imm[11:10] == 3) rg_rd <= ((rs1 << (rs2 & 63)) | (rs1 >> (64 - (rs2 & 63)))); //rol
-      if((opcode == 1 && funct3 == 3)||(opcode == 0 && (funct3 == 5 || funct3 == 0))) begin //grev and grevi
-        if(opcode == 0 && funct3 == 0) rs2 = 'h00000000000000ff;
+      //if(opcode == 0 && funct3 == 1) rg_rd <= zeroExtend(pack(countZerosLSB(rs1)));
+      //if(opcode == 0 && funct3 == 2) rg_rd <= zeroExtend(pack(countOnes(rs1))); //pcnt
+      //if(opcode == 1 && funct3 == 0) rg_rd <= (rs1 & ~rs2); //andc
+      //if((opcode == 1 && funct3 == 1 && imm[11:10] == 2) || (opcode == 0 && funct3 == 4 && imm[11:10] == 2)) begin //sro sroi
+      //  if (opcode == 0 && funct3 == 4 && imm[11:10] == 2) rs2 = zeroExtend(imm);
+      //  rg_rd <= ~(~rs1 >> (rs2 & 63)); //sro
+      //end
+      //if((opcode == 1 && funct3 == 2 && imm[11:10] == 2) || (opcode == 0 && funct3 == 3 && imm[11:10] == 2)) begin //slo sloi
+      //  if (opcode == 0 && funct3 == 3 && imm[11:10] == 2) rs2 = zeroExtend(imm);
+      //  rg_rd <= ~(~rs1 << (rs2 & 63)); //slo
+      //end
+      //if((opcode == 1 && funct3 == 1 && imm[11:10] == 3) || (opcode == 0 && funct3 == 3 && imm[11:10] == 3)) begin //ror rori
+      //  if (opcode == 0 && funct3 == 3 && imm[11:10] == 3) rs2 = zeroExtend(imm);
+      //  rg_rd <= ((rs1 >> (rs2 & 63)) | (rs1 << (64 - (rs2 & 63)))); 
+      //end
+      //if(opcode == 1 && funct3 == 2 && imm[11:10] == 3) rg_rd <= ((rs1 << (rs2 & 63)) | (rs1 >> (64 - (rs2 & 63)))); //rol
+      if((opcode == 1 && funct3 == 3)||(opcode == 0 && (funct3 == 5 /*|| funct3 == 0*/))) begin //grev and grevi
+        //if(opcode == 0 && funct3 == 0) rs2 = 'h00000000000000ff;
         if(opcode == 0 && funct3 == 5) rs2 = zeroExtend(imm);
         if(rs2[0] == 1) a = reverse(rs1, 64'h5555555555555555, 64'hAAAAAAAAAAAAAAAA, 1);
         else a = rs1;
@@ -95,13 +115,24 @@ package ALU;
         else e = d;
         if(rs2[5] == 1) f = reverse(e, 64'h00000000FFFFFFFF, 64'hFFFFFFFF00000000, 32);
         else f = e;
-        if(funct3 != 0) rg_rd <= f;
+        //if(funct3 != 0)
+        rg_rd <= f;
       end
-      if(opcode == 0 && (funct3 == 1 || funct3 == 0)) begin
-        if(funct3 == 1) f = rs1;
-        rg_rd <= zeroExtend(pack(countZerosLSB(f)));
-      end
+      //if(opcode == 0 && (funct3 == 1 || funct3 == 0)) begin
+      //  if(funct3 == 1) f = rs1;
+      //  rg_rd <= zeroExtend(pack(countZerosLSB(f)));
+      //end
       if(opcode == 0 && funct3 == 6) begin //gzip
+        Bit#(64) v1 = (rs2[0]==1) ? 64'h2222222222222222 : 64'h00000000ffff0000;
+        Bit#(64) v2 = (rs2[0]==1) ? 64'h0c0c0c0c0c0c0c0c : 64'h0000ff000000ff00;
+        Bit#(64) v3 = 64'h00f000f000f000f0;
+        Bit#(64) v4 = (rs2[0]==1) ? 64'h0000ff000000ff00 : 64'h0c0c0c0c0c0c0c0c;
+        Bit#(64) v5 = (rs2[0]==1) ? 64'h00000000ffff0000 : 64'h2222222222222222;
+        Bit#(64) u1 = (rs2[0]==1) ? 64'h4444444444444444 : 64'h0000ffff00000000;
+        Bit#(64) u2 = (rs2[0]==1) ? 64'h3030303030303030 : 64'h00ff000000ff0000;
+        Bit#(64) u3 = 64'h0f000f000f000f00;
+        Bit#(64) u4 = (rs2[0]==1) ? 64'h00ff000000ff0000 : 64'h3030303030303030;
+        Bit#(64) u5 = (rs2[0]==1) ? 64'h0000ffff00000000 : 64'h4444444444444444;
         if(rs2[0] == 1) begin
           if(rs2[1] == 1) a = gzip_stage(rs1, 64'h4444444444444444, 64'h2222222222222222, 1);
           else a = rs1;

@@ -1,9 +1,9 @@
 ### Makefile for the srio
 
-TOP_MODULE:=mkTestbench
-TOP_FILE:=Testbench.bsv
+TOP_MODULE:=mkALU
+TOP_FILE:=ALU.bsv
 HOMEDIR:=./
-TOP_DIR:=./testbench
+TOP_DIR:=./src
 BSVBUILDDIR:=./build/
 VERILOGDIR:=./verilog/
 FILES:= ./src/:./testbench/
@@ -13,6 +13,9 @@ export HOMEDIR=./
 export TOP=$(TOP_MODULE)
 
 default: full_clean compile link simulate
+
+timing_area: full_clean generate_verilog vivado_build
+
 .PHONY: compile
 compile:
 	@echo Compiling $(TOP_MODULE)....

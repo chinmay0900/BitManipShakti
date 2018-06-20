@@ -51,7 +51,7 @@ package gzip;
         else d = c;
         rg_rd <= d;
       end  
-      else if(rs2[0] == 0 && n == 64) begin
+      else if(rs2[0] == 0 && n == 32) begin
         if(rs2[4] == 1) a = (rs1 & 'hff0000ff) | (((rs1 << 8) & 'h00ff0000) | ((rs1 >> 8) & 'h0000ff00));
         else a = rs1;
         if(rs2[3] == 1) b = (a & 'hf00ff00f) | (((a << 4) & 'h0f000f00) | ((a >> 4) & 'h00f000f0));

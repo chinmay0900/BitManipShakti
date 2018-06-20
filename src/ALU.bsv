@@ -68,7 +68,8 @@ package ALU;
       //end
 
       case(funsel)
-        'h112,'h122, 'h113, 'h123 : shamt = truncate(rs2);
+        'h092,'h0a2, 'h093 : shamt = truncate(rs2);
+        'h0a3 : shamt = truncate('h40 - rs2);
         'h042, 'h032, 'h033 : shamt = truncate(imm);
       endcase
 
@@ -76,14 +77,10 @@ package ALU;
         'h00_ : rg_rd <= zeroExtend(pack(countZerosMSB(rs1)));
         'h01_ : rg_rd <= zeroExtend(pack(countZerosLSB(rs1)));
         'h02_ : rg_rd <= zeroExtend(pack(countOnes(rs1))); 
-        'h10_ : rg_rd <= (rs1 & ~rs2);
-        'h112 : rg_rd <= ~(~rs1 >> shamt); //sro
-        'h042 : rg_rd <= ~(~rs1 >> shamt); //sroi
-        'h122 : rg_rd <= ~(~rs1 << shamt); //slo
-        'h032 : rg_rd <= ~(~rs1 << shamt); //sloi
-        'h113 : rg_rd <= ((rs1 >> shamt) | (rs1 << (64 - {1'b0,shamt}))); //ror
-        'h033 : rg_rd <= ((rs1 >> shamt) | (rs1 << (64 - {1'b0,shamt}))); //rori
-        'h123 : rg_rd <= ((rs1 << shamt) | (rs1 >> (64 - {1'b0,shamt}))); //rol
+        'h08_ : rg_rd <= (rs1 & ~rs2);
+        'h092, 'h042 : rg_rd <= ~(~rs1 >> shamt); //sro sroi
+        'h0a2, 'h032 : rg_rd <= ~(~rs1 << shamt); //slo sloi
+        'h093, 'h033, 'h0a3 : rg_rd <= ((rs1 >> shamt) | (rs1 << (64 - {1'b0,shamt}))); //ror rori rol
       endcase
 
       //if(opcode == 0 && funct3 == 0) rg_rd <= zeroExtend(pack(countZerosMSB(rs1)));

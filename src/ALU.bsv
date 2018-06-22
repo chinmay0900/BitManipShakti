@@ -1,13 +1,15 @@
 package ALU;
 
   import DReg::*;
+  import UniqueWrappers::*;
   interface Ifc_ALU;
     method Action ma_start(Bit#(5) opcode, Bit#(3) funct3, Bit#(12) imm, Bit#(64) rs1, Bit#(64) rs2); 
     method Bit#(64) mn_done;
   endinterface
 
   (*noinline*)
-  function Bit#(64) reverse(Bit#(64) src, Bit#(64) sl, Bit#(64) sr, Bit#(7) lnum, Bit#(7) rnum);
+  function Bit#(64) reverse(Tuple5#(Bit#(64), Bit#(64), Bit#(64), Bit#(7), Bit#(7)) inp);
+    let {src, sl, sr, lnum, rnum}=inp;
     return (((src & sl) << lnum) | ((src & sr) >> rnum));
   endfunction
 
@@ -25,7 +27,7 @@ package ALU;
     Reg#(Bit#(64)) rg_x <- mkReg(0);
     Reg#(Bit#(64)) rg_y <- mkReg(0);
     Reg#(Bit#(2)) rg_depext <- mkReg(0);
-
+    Wrapper#(Tuple5#(Bit#(64), Bit#(64), Bit#(64), Bit#(7), Bit#(7)),  Bit#(64)) ureverse <- mkUniqueWrapper(reverse);
 //opcode OP-IMM = 0 funct3 = 0 : CLZ
 //opcode OP-IMM = 0 funct3 = 1 : CTZ
 //opcode OP-IMM = 0 funct3 = 2 : PCNT
@@ -79,13 +81,25 @@ package ALU;
         'h00?_ : rg_rd <= zeroExtend(pack(countZerosMSB(rs1)));
         'h01?_ : rg_rd <= zeroExtend(pack(countZerosLSB(rs1)));
         'h02?_ : rg_rd <= zeroExtend(pack(countOnes(rs1))); 
-        'h08?_ : rg_rd <= reverse(rs1, ~rs2, 'h0, 'h0, 'h0);//(rs1 & ~rs2); //andwithc
+        'h08?_ : begin 
+          let temp <- ureverse.func(tuple5(rs1, ~rs2, 'h0, 'h0, 'h0));//(rs1 & ~rs2); //andwithc
+          rg_rd<= temp;
+        end
       endcase
 
       case(funsel)
-        'h092, 'h042 : rg_rd <= ~(reverse(~rs1, 'h0, 'hffffffffffffffff, 'h0, {1'b0,shamt}));//~(~rs1 >> shamt); //sro sroi
-        'h0a2, 'h032 : rg_rd <= ~(reverse(~rs1, 'hffffffffffffffff, 'h0, {1'b0,shamt}, 'h0));//~(~rs1 << shamt); //slo sloi
-        'h093, 'h033, 'h0a3 : rg_rd <= reverse(rs1, 'hffffffffffffffff, 'hffffffffffffffff, (64 - {1'b0,shamt}), {1'b0,shamt}); //((rs1 >> shamt) | (rs1 << (64 - {1'b0,shamt}))); //ror rori rol
+        'h092, 'h042 : begin
+          let temp <- ureverse.func(tuple5(~rs1, 'h0, 'hffffffffffffffff, 'h0, {1'b0,shamt}));//~(~rs1 >> shamt); //sro sroi
+          rg_rd<= ~temp;
+        end
+        'h0a2, 'h032 : begin 
+          let temp <- (ureverse.func(tuple5(~rs1, 'hffffffffffffffff, 'h0, {1'b0,shamt}, 'h0)));//~(~rs1 << shamt); //slo sloi
+          rg_rd <= ~temp;
+        end
+        'h093, 'h033, 'h0a3 : begin
+          let temp <- ureverse.func(tuple5(rs1, 'hffffffffffffffff, 'hffffffffffffffff, (64 - {1'b0,shamt}), {1'b0,shamt})); //((rs1 >> shamt) | (rs1 << (64 - {1'b0,shamt}))); //ror rori rol
+          rg_rd<= temp;
+        end
         'h050, 'h051, 'h052, 'h053, 'h0b0, 'h0b1, 'h0b2, 'h0b3 : begin
         if(shamt[0] == 1) a = reverse(rs1, 64'h5555555555555555, 64'hAAAAAAAAAAAAAAAA, 1, 1);
         else a = rs1;
@@ -99,7 +113,7 @@ package ALU;
         else e = d;
         if(shamt[5] == 1) f = reverse(e, 64'h00000000FFFFFFFF, 64'hFFFFFFFF00000000, 32, 32);
         else f = e;
-        rg_rd <= f;
+        rg_rd <= rs1;
         end
         'h060, 'h061, 'h062, 'h063 : begin
         if(shamt[0] == 1) begin

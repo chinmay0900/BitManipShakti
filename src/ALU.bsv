@@ -7,14 +7,14 @@ package ALU;
   endinterface
 
   (*noinline*)
-   function Bit#(64) reverse(Bit#(64) src, Bit#(64) sl, Bit#(64) sr, Bit#(64) num);
-     return (((src & sl) << num) | ((src & sr) >> num));
-   endfunction
+  function Bit#(64) reverse(Bit#(64) src, Bit#(64) sl, Bit#(64) sr, Bit#(7) lnum, Bit#(7) rnum);
+    return (((src & sl) << lnum) | ((src & sr) >> rnum));
+  endfunction
 
   (*noinline*)
-   function Bit#(64) gzip_stage(Bit#(64) src, Bit#(64) sl, Bit#(64) sr, Bit#(64) num);
-     return ((src & (~(sl | sr))) | ((src << num) & sl) | ((src >> num) & sr));
-   endfunction
+  function Bit#(64) gzip_stage(Bit#(64) src, Bit#(64) sl, Bit#(64) sr, Bit#(6) num);
+    return ((src & (~(sl | sr))) | ((src << num) & sl) | ((src >> num) & sr));
+  endfunction
 
   (*synthesize*)
   module mkALU(Ifc_ALU);
@@ -73,19 +73,19 @@ package ALU;
         'h042, 'h032, 'h033 : shamt = truncate(imm);
       endcase
 
-     // $display("\nfunsel : %h or %b\n",funsel, funsel);
+     //$display("\nfunsel : %h or %b\nshamt : %h",funsel, funsel, shamt);
 
       case(funsel) matches
         'h00?_ : rg_rd <= zeroExtend(pack(countZerosMSB(rs1)));
         'h01?_ : rg_rd <= zeroExtend(pack(countZerosLSB(rs1)));
         'h02?_ : rg_rd <= zeroExtend(pack(countOnes(rs1))); 
-        'h08?_ : rg_rd <= (rs1 & ~rs2);
+        'h08?_ : rg_rd <= reverse(rs1, ~rs2, 'h0, 'h0, 'h0);//(rs1 & ~rs2); //andwithc
       endcase
 
       case(funsel)
-        'h092, 'h042 : rg_rd <= ~(~rs1 >> shamt); //sro sroi
-        'h0a2, 'h032 : rg_rd <= ~(~rs1 << shamt); //slo sloi
-        'h093, 'h033, 'h0a3 : rg_rd <= ((rs1 >> shamt) | (rs1 << (64 - {1'b0,shamt}))); //ror rori rol
+        'h092, 'h042 : rg_rd <= ~(reverse(~rs1, 'h0, 'hffffffffffffffff, 'h0, {1'b0,shamt}));//~(~rs1 >> shamt); //sro sroi
+        'h0a2, 'h032 : rg_rd <= ~(reverse(~rs1, 'hffffffffffffffff, 'h0, {1'b0,shamt}, 'h0));//~(~rs1 << shamt); //slo sloi
+        'h093, 'h033, 'h0a3 : rg_rd <= reverse(rs1, 'hffffffffffffffff, 'hffffffffffffffff, (64 - {1'b0,shamt}), {1'b0,shamt}); //((rs1 >> shamt) | (rs1 << (64 - {1'b0,shamt}))); //ror rori rol
       endcase
 
       //if(opcode == 0 && funct3 == 0) rg_rd <= zeroExtend(pack(countZerosMSB(rs1)));
@@ -108,21 +108,20 @@ package ALU;
       if((opcode == 1 && funct3 == 3)||(opcode == 0 && (funct3 == 5 /*|| funct3 == 0*/))) begin //grev and grevi
         //if(opcode == 0 && funct3 == 0) rs2 = 'h00000000000000ff;
         if(opcode == 0 && funct3 == 5) rs2 = zeroExtend(imm);
-        if(rs2[0] == 1) a = reverse(rs1, 64'h5555555555555555, 64'hAAAAAAAAAAAAAAAA, 1);
+        if(rs2[0] == 1) a = reverse(rs1, 64'h5555555555555555, 64'hAAAAAAAAAAAAAAAA, 1, 1);
         else a = rs1;
-        if(rs2[1] == 1) b = reverse(a, 64'h3333333333333333, 64'hCCCCCCCCCCCCCCCC, 2);
+        if(rs2[1] == 1) b = reverse(a, 64'h3333333333333333, 64'hCCCCCCCCCCCCCCCC, 2, 2);
         else b = a;
-        if(rs2[2] == 1) c = reverse(b, 64'h0F0F0F0F0F0F0F0F, 64'hF0F0F0F0F0F0F0F0, 4);
+        if(rs2[2] == 1) c = reverse(b, 64'h0F0F0F0F0F0F0F0F, 64'hF0F0F0F0F0F0F0F0, 4, 4);
         else c = b;
-        if(rs2[3] == 1) d = reverse(c, 64'h00FF00FF00FF00FF, 64'hFF00FF00FF00FF00, 8);
+        if(rs2[3] == 1) d = reverse(c, 64'h00FF00FF00FF00FF, 64'hFF00FF00FF00FF00, 8, 8);
         else d = c;
-        if(rs2[4] == 1) e = reverse(d, 64'h0000FFFF0000FFFF, 64'hFFFF0000FFFF0000, 16);
+        if(rs2[4] == 1) e = reverse(d, 64'h0000FFFF0000FFFF, 64'hFFFF0000FFFF0000, 16, 16);
         else e = d;
-        if(rs2[5] == 1) f = reverse(e, 64'h00000000FFFFFFFF, 64'hFFFFFFFF00000000, 32);
+        if(rs2[5] == 1) f = reverse(e, 64'h00000000FFFFFFFF, 64'hFFFFFFFF00000000, 32, 32);
         else f = e;
         //if(funct3 != 0)
         rg_rd <= f;
-        rg_work <= True;
       end
       //if(opcode == 0 && (funct3 == 1 || funct3 == 0)) begin
       //  if(funct3 == 1) f = rs1;
@@ -155,9 +154,8 @@ package ALU;
           else e = d;
         rg_rd <= e;
         end
-        rg_work <= True;
       end
-      else if(opcode == 1 && funct3 == 4) begin //bit extract
+      if(opcode == 1 && funct3 == 4) begin //bit extract
         rg_x <= rs1; 
         rg_y <= rs2;
         rg_rd <= 0;

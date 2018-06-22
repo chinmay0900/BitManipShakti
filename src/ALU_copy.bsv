@@ -25,6 +25,7 @@ package ALU_copy;
     Reg#(Bit#(64)) rg_x <- mkReg(0);
     Reg#(Bit#(64)) rg_y <- mkReg(0);
     Reg#(Bit#(2)) rg_depext <- mkReg(0);
+    Reg#(Bit#(7)) rg_count <- mkReg(0);
 
 //opcode OP-IMM = 0 funct3 = 0 : CLZ
 //opcode OP-IMM = 0 funct3 = 1 : CTZ
@@ -54,6 +55,37 @@ package ALU_copy;
         rg_depext<= 0;
       end
     endrule
+
+    rule rl_gzip(opcode == 0 && funct3 == 6);//gzip
+
+        Reg#(Bit#(64)) var <- mkReg(0);
+
+        if(shamt[0] == 1) begin
+          if(rg_count == 0) var <= 1;
+          else var <= var << 1;
+        end
+   
+        else begin
+          if(rg_count == 0) var <= 16;
+          else var <= var >> 1;
+        end   
+        rg_count <= rg_count + 1;
+
+        p = (var == 1) ? 64'h4444444444444444 : 64'h0000ffff00000000;
+        p = (var == 2) ? 64'h3030303030303030 : 64'h00ff000000ff0000;
+        p = (var == 4) ? 64'h0f000f000f000f00;
+        p = (var == 8) ? 64'h00ff000000ff0000 : 64'h3030303030303030;
+        p = (var == 16) ? 64'h0000ffff00000000 : 64'h4444444444444444;
+        
+        if(rg_count < 6) begin            
+          let r <- gzipstage(rg_rd, p, p >> var, var);
+          rg_rd <= r;
+        end
+        if(rg_count == 6) begin
+          rg_work <= True;
+          rg_depext <= 1;
+        end
+      endrule
 
     method Action ma_start(Bit#(5) opcode, Bit#(3) funct3, Bit#(12) imm, Bit#(64) rs1, Bit#(64)
     rs2)if(rg_depext==0); 
@@ -126,22 +158,10 @@ package ALU_copy;
       //if(opcode == 0 && (funct3 == 1 || funct3 == 0)) begin
       //  if(funct3 == 1) f = rs1;
       //  rg_rd <= zeroExtend(pack(countZerosLSB(f)));
-      //end      
-      Bit#(64) v1 = (shamt[0] == 1) ? 64'h4444444444444444 : 64'h0000ffff00000000;
-      Bit#(64) v2 = (shamt[0] == 1) ? 64'h3030303030303030 : 64'h00ff000000ff0000;
-      Bit#(64) v3 = 64'h0f000f000f000f00;
-      Bit#(64) v4 = (shamt[0] == 1) ? 64'h00ff000000ff0000 : 64'h3030303030303030;
-      Bit#(64) v5 = (shamt[0] == 1) ? 64'h0000ffff00000000 : 64'h4444444444444444;
-      Bit#(64) u1 = (shamt[0] == 1) ? 64'h2222222222222222 : 64'h00000000ffff0000;
-      Bit#(64) u2 = (shamt[0] == 1) ? 64'h0c0c0c0c0c0c0c0c : 64'h0000ff000000ff00;
-      Bit#(64) u3 = 64'h00f000f000f000f0;
-      Bit#(64) u4 = (shamt[0] == 1) ? 64'h0000ff000000ff00 : 64'h0c0c0c0c0c0c0c0c;
-      Bit#(64) u5 = (shamt[0] == 1) ? 64'h00000000ffff0000 : 64'h2222222222222222;
-      Bit#(6) w1 = (shamt[0] == 1) ? 1 : 16;
-      Bit#(6) w2 = (shamt[0] == 1) ? 2 : 8;
-      Bit#(6) w3 = (shamt[0] == 1) ? 8 : 2;
-      Bit#(6) w4 = (shamt[0] == 1) ? 16 : 1;
+      //end     
 
+      
+     /*
       if(opcode == 0 && funct3 == 6) begin //gzip
           if(((shamt[1] == 1)&&(w1 == 1)) || ((rs2[5] == 1)&&(w1 != 1))) a = gzip_stage(rs1, v1, u1, w1);
           else a = rs1;
@@ -154,7 +174,7 @@ package ALU_copy;
           if(((shamt[5] == 1)&&(w1 == 1)) || ((rs2[1] == 1)&&(w1 != 1))) e = gzip_stage(d, v5, u5, w4);
           else e = d;
         rg_rd <= e;
-       /*
+       
           else begin
           if(rs2[5] == 1) a = gzip_stage(rs1, 64'h0000ffff00000000, 64'h00000000ffff0000, 16);
           else a = rs1;
@@ -167,8 +187,9 @@ package ALU_copy;
           if(rs2[1] == 1) e = gzip_stage(d, 64'h4444444444444444, 64'h2222222222222222, 1);
           else e = d;
         rg_rd <= e;
-        end */
+        end 
       end
+      */
       if(opcode == 1 && funct3 == 4) begin //bit extract
         rg_x <= rs1; 
         rg_y <= rs2;

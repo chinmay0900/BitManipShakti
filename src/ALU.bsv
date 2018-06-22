@@ -27,7 +27,10 @@ package ALU;
     Reg#(Bit#(64)) rg_x <- mkReg(0);
     Reg#(Bit#(64)) rg_y <- mkReg(0);
     Reg#(Bit#(2)) rg_depext <- mkReg(0);
+    Reg#(Bit#(7)) rg_count <- mkReg(0);
+    Reg#(Bit#(6)) rg_shamt <- mkReg(0);
     Wrapper#(Tuple5#(Bit#(64), Bit#(64), Bit#(64), Bit#(7), Bit#(7)),  Bit#(64)) ureverse <- mkUniqueWrapper(reverse);
+
 //opcode OP-IMM = 0 funct3 = 0 : CLZ
 //opcode OP-IMM = 0 funct3 = 1 : CTZ
 //opcode OP-IMM = 0 funct3 = 2 : PCNT
@@ -46,7 +49,7 @@ package ALU;
 //opcode OP = 1 funct3 = 4 : BEXT
 //opcode OP = 1 funct3 = 5 : BDEP
 
-    rule rl_putbtdeposit(rg_depext != 0);
+    rule rl_putbtdeposit(rg_depext == 1 || rg_depext == 2);
       if((rg_x & (rg_m)) > 0 && rg_depext == 2) rg_rd <= rg_rd | (rg_y & -rg_y); //deposit
       else if((rg_x & (rg_y & -rg_y)) > 0 && rg_depext == 1) rg_rd <= rg_rd | rg_m; //extract
       rg_y <= rg_y - (rg_y & -rg_y);
@@ -57,6 +60,29 @@ package ALU;
       end
     endrule
 
+    rule rl_greverse(rg_depext == 3);
+      Bit#(64) y = 0;
+      Int#(4) count = 0;
+      case(rg_count)
+      'h1 : y = 64'h5555555555555555;
+      'h2 : begin y = 64'h3333333333333333; count = 1; end
+      'h4 : begin y = 64'h0F0F0F0F0F0F0F0F; count = 2; end
+      'h8 : begin y = 64'h00FF00FF00FF00FF; count = 3; end
+      'h10 : begin y = 64'h0000FFFF0000FFFF; count = 4; end
+      'h20 : begin y = 64'h00000000FFFFFFFF; count = 5; end
+      endcase
+      if(rg_shamt[count] == 1) begin
+        let temp <- ureverse.func(tuple5(rg_rd, y, ~y, rg_count, rg_count));//grev
+        rg_rd <= temp;
+      end
+      rg_count <= rg_count << 1;
+      //$display("\nrg_rd : %h, rg_count : %h, count : %h\n",rg_rd, rg_count, count);
+      if(rg_count == 'h20) begin
+        rg_work <= True;
+        rg_depext <= 0;
+      end
+      endrule
+ 
     method Action ma_start(Bit#(5) opcode, Bit#(3) funct3, Bit#(12) imm, Bit#(64) rs1, Bit#(64)
     rs2)if(rg_depext==0); 
       Bit#(64) a = 0, b = 0, c = 0, d = 0, e = 0, f = 0;
@@ -83,14 +109,14 @@ package ALU;
         'h02?_ : rg_rd <= zeroExtend(pack(countOnes(rs1))); 
         'h08?_ : begin 
           let temp <- ureverse.func(tuple5(rs1, ~rs2, 'h0, 'h0, 'h0));//(rs1 & ~rs2); //andwithc
-          rg_rd<= temp;
+          rg_rd <= temp;
         end
       endcase
 
       case(funsel)
         'h092, 'h042 : begin
           let temp <- ureverse.func(tuple5(~rs1, 'h0, 'hffffffffffffffff, 'h0, {1'b0,shamt}));//~(~rs1 >> shamt); //sro sroi
-          rg_rd<= ~temp;
+          rg_rd <= ~temp;
         end
         'h0a2, 'h032 : begin 
           let temp <- (ureverse.func(tuple5(~rs1, 'hffffffffffffffff, 'h0, {1'b0,shamt}, 'h0)));//~(~rs1 << shamt); //slo sloi
@@ -98,22 +124,7 @@ package ALU;
         end
         'h093, 'h033, 'h0a3 : begin
           let temp <- ureverse.func(tuple5(rs1, 'hffffffffffffffff, 'hffffffffffffffff, (64 - {1'b0,shamt}), {1'b0,shamt})); //((rs1 >> shamt) | (rs1 << (64 - {1'b0,shamt}))); //ror rori rol
-          rg_rd<= temp;
-        end
-        'h050, 'h051, 'h052, 'h053, 'h0b0, 'h0b1, 'h0b2, 'h0b3 : begin
-        if(shamt[0] == 1) a = reverse(tuple5(rs1, 64'h5555555555555555, 64'hAAAAAAAAAAAAAAAA, 1, 1));
-        else a = rs1;
-        if(shamt[1] == 1) b = reverse(tuple5(a, 64'h3333333333333333, 64'hCCCCCCCCCCCCCCCC, 2, 2));
-        else b = a;
-        if(shamt[2] == 1) c = reverse(tuple5(b, 64'h0F0F0F0F0F0F0F0F, 64'hF0F0F0F0F0F0F0F0, 4, 4));
-        else c = b;
-        if(shamt[3] == 1) d = reverse(tuple5(c, 64'h00FF00FF00FF00FF, 64'hFF00FF00FF00FF00, 8, 8));
-        else d = c;
-        if(shamt[4] == 1) e = reverse(tuple5(d, 64'h0000FFFF0000FFFF, 64'hFFFF0000FFFF0000, 16, 16));
-        else e = d;
-        if(shamt[5] == 1) f = reverse(tuple5(e, 64'h00000000FFFFFFFF, 64'hFFFFFFFF00000000, 32, 32));
-        else f = e;
-        rg_rd <= rs1;
+          rg_rd <= temp;
         end
         'h060, 'h061, 'h062, 'h063 : begin
         if(shamt[0] == 1) begin
@@ -182,6 +193,12 @@ package ALU;
         rg_rd <= 0;
         rg_m <= 1;
         rg_depext <= 2;
+      end
+      else if((opcode == 1 && funct3 == 3) || (opcode == 0 && funct3 == 5)) begin //grev
+        rg_count <= 1; 
+        rg_shamt <= (shamt);
+        rg_rd <= rs1;
+        rg_depext <= 3;
       end
       else rg_work <= True;
     endmethod

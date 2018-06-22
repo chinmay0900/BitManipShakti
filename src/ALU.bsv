@@ -101,17 +101,17 @@ package ALU;
           rg_rd<= temp;
         end
         'h050, 'h051, 'h052, 'h053, 'h0b0, 'h0b1, 'h0b2, 'h0b3 : begin
-        if(shamt[0] == 1) a = reverse(rs1, 64'h5555555555555555, 64'hAAAAAAAAAAAAAAAA, 1, 1);
+        if(shamt[0] == 1) a = reverse(tuple5(rs1, 64'h5555555555555555, 64'hAAAAAAAAAAAAAAAA, 1, 1));
         else a = rs1;
-        if(shamt[1] == 1) b = reverse(a, 64'h3333333333333333, 64'hCCCCCCCCCCCCCCCC, 2, 2);
+        if(shamt[1] == 1) b = reverse(tuple5(a, 64'h3333333333333333, 64'hCCCCCCCCCCCCCCCC, 2, 2));
         else b = a;
-        if(shamt[2] == 1) c = reverse(b, 64'h0F0F0F0F0F0F0F0F, 64'hF0F0F0F0F0F0F0F0, 4, 4);
+        if(shamt[2] == 1) c = reverse(tuple5(b, 64'h0F0F0F0F0F0F0F0F, 64'hF0F0F0F0F0F0F0F0, 4, 4));
         else c = b;
-        if(shamt[3] == 1) d = reverse(c, 64'h00FF00FF00FF00FF, 64'hFF00FF00FF00FF00, 8, 8);
+        if(shamt[3] == 1) d = reverse(tuple5(c, 64'h00FF00FF00FF00FF, 64'hFF00FF00FF00FF00, 8, 8));
         else d = c;
-        if(shamt[4] == 1) e = reverse(d, 64'h0000FFFF0000FFFF, 64'hFFFF0000FFFF0000, 16, 16);
+        if(shamt[4] == 1) e = reverse(tuple5(d, 64'h0000FFFF0000FFFF, 64'hFFFF0000FFFF0000, 16, 16));
         else e = d;
-        if(shamt[5] == 1) f = reverse(e, 64'h00000000FFFFFFFF, 64'hFFFFFFFF00000000, 32, 32);
+        if(shamt[5] == 1) f = reverse(tuple5(e, 64'h00000000FFFFFFFF, 64'hFFFFFFFF00000000, 32, 32));
         else f = e;
         rg_rd <= rs1;
         end

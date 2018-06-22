@@ -1,9 +1,9 @@
 ### Makefile for the srio
 
-TOP_MODULE:=mkTestbench
-TOP_FILE:=Testbench.bsv
+TOP_MODULE:=mkALU
+TOP_FILE:=ALU.bsv
 HOMEDIR:=./
-TOP_DIR:=./testbench
+TOP_DIR:=./src
 BSVBUILDDIR:=./build/
 VERILOGDIR:=./verilog/
 FILES:= ./src/:./testbench/

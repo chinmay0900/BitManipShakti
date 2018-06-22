@@ -68,9 +68,9 @@ package ALU;
       //end
 
       case(funsel)
-        'h092,'h0a2, 'h093 : shamt = truncate(rs2);
+        'h092,'h0a2, 'h093, 'h0b0, 'h0b1, 'h0b2, 'h0b3, 'h060, 'h061, 'h062, 'h063 : shamt = truncate(rs2);
         'h0a3 : shamt = truncate('h40 - rs2);
-        'h042, 'h032, 'h033 : shamt = truncate(imm);
+        'h042, 'h032, 'h033, 'h050, 'h051, 'h052, 'h053: shamt = truncate(imm);
       endcase
 
      //$display("\nfunsel : %h or %b\nshamt : %h",funsel, funsel, shamt);
@@ -86,6 +86,49 @@ package ALU;
         'h092, 'h042 : rg_rd <= ~(reverse(~rs1, 'h0, 'hffffffffffffffff, 'h0, {1'b0,shamt}));//~(~rs1 >> shamt); //sro sroi
         'h0a2, 'h032 : rg_rd <= ~(reverse(~rs1, 'hffffffffffffffff, 'h0, {1'b0,shamt}, 'h0));//~(~rs1 << shamt); //slo sloi
         'h093, 'h033, 'h0a3 : rg_rd <= reverse(rs1, 'hffffffffffffffff, 'hffffffffffffffff, (64 - {1'b0,shamt}), {1'b0,shamt}); //((rs1 >> shamt) | (rs1 << (64 - {1'b0,shamt}))); //ror rori rol
+        'h050, 'h051, 'h052, 'h053, 'h0b0, 'h0b1, 'h0b2, 'h0b3 : begin
+        if(shamt[0] == 1) a = reverse(rs1, 64'h5555555555555555, 64'hAAAAAAAAAAAAAAAA, 1, 1);
+        else a = rs1;
+        if(shamt[1] == 1) b = reverse(a, 64'h3333333333333333, 64'hCCCCCCCCCCCCCCCC, 2, 2);
+        else b = a;
+        if(shamt[2] == 1) c = reverse(b, 64'h0F0F0F0F0F0F0F0F, 64'hF0F0F0F0F0F0F0F0, 4, 4);
+        else c = b;
+        if(shamt[3] == 1) d = reverse(c, 64'h00FF00FF00FF00FF, 64'hFF00FF00FF00FF00, 8, 8);
+        else d = c;
+        if(shamt[4] == 1) e = reverse(d, 64'h0000FFFF0000FFFF, 64'hFFFF0000FFFF0000, 16, 16);
+        else e = d;
+        if(shamt[5] == 1) f = reverse(e, 64'h00000000FFFFFFFF, 64'hFFFFFFFF00000000, 32, 32);
+        else f = e;
+        rg_rd <= f;
+        end
+        'h060, 'h061, 'h062, 'h063 : begin
+        if(shamt[0] == 1) begin
+          if(shamt[1] == 1) a = gzip_stage(rs1, 64'h4444444444444444, 64'h2222222222222222, 1);
+          else a = rs1;
+          if(shamt[2] == 1) b = gzip_stage(a, 64'h3030303030303030, 64'h0c0c0c0c0c0c0c0c, 2);
+          else b = a;
+          if(shamt[3] == 1) c = gzip_stage(b, 64'h0f000f000f000f00, 64'h00f000f000f000f0, 4);
+          else c = b;
+          if(shamt[4] == 1) d = gzip_stage(c, 64'h00ff000000ff0000, 64'h0000ff000000ff00, 8);
+          else d = c;
+          if(shamt[5] == 1) e = gzip_stage(d, 64'h0000ffff00000000, 64'h00000000ffff0000, 16);
+          else e = d;
+        rg_rd <= e;
+        end  
+          else begin
+          if(shamt[5] == 1) a = gzip_stage(rs1, 64'h0000ffff00000000, 64'h00000000ffff0000, 16);
+          else a = rs1;
+          if(shamt[4] == 1) b = gzip_stage(a, 64'h00ff000000ff0000, 64'h0000ff000000ff00, 8);
+          else b = a;
+          if(shamt[3] == 1) c = gzip_stage(b, 64'h0f000f000f000f00, 64'h00f000f000f000f0, 4);
+          else c = b;
+          if(shamt[2] == 1) d = gzip_stage(c, 64'h3030303030303030, 64'h0c0c0c0c0c0c0c0c, 2);
+          else d = c;
+          if(shamt[1] == 1) e = gzip_stage(d, 64'h4444444444444444, 64'h2222222222222222, 1);
+          else e = d;
+        rg_rd <= e;
+        end
+      end
       endcase
 
       //if(opcode == 0 && funct3 == 0) rg_rd <= zeroExtend(pack(countZerosMSB(rs1)));
@@ -105,56 +148,13 @@ package ALU;
       //  rg_rd <= ((rs1 >> (rs2 & 63)) | (rs1 << (64 - (rs2 & 63)))); 
       //end
       //if(opcode == 1 && funct3 == 2 && imm[11:10] == 3) rg_rd <= ((rs1 << (rs2 & 63)) | (rs1 >> (64 - (rs2 & 63)))); //rol
-      if((opcode == 1 && funct3 == 3)||(opcode == 0 && (funct3 == 5 /*|| funct3 == 0*/))) begin //grev and grevi
+      //if((opcode == 1 && funct3 == 3)||(opcode == 0 && (funct3 == 5 /*|| funct3 == 0*/))) begin //grev and grevi
         //if(opcode == 0 && funct3 == 0) rs2 = 'h00000000000000ff;
-        if(opcode == 0 && funct3 == 5) rs2 = zeroExtend(imm);
-        if(rs2[0] == 1) a = reverse(rs1, 64'h5555555555555555, 64'hAAAAAAAAAAAAAAAA, 1, 1);
-        else a = rs1;
-        if(rs2[1] == 1) b = reverse(a, 64'h3333333333333333, 64'hCCCCCCCCCCCCCCCC, 2, 2);
-        else b = a;
-        if(rs2[2] == 1) c = reverse(b, 64'h0F0F0F0F0F0F0F0F, 64'hF0F0F0F0F0F0F0F0, 4, 4);
-        else c = b;
-        if(rs2[3] == 1) d = reverse(c, 64'h00FF00FF00FF00FF, 64'hFF00FF00FF00FF00, 8, 8);
-        else d = c;
-        if(rs2[4] == 1) e = reverse(d, 64'h0000FFFF0000FFFF, 64'hFFFF0000FFFF0000, 16, 16);
-        else e = d;
-        if(rs2[5] == 1) f = reverse(e, 64'h00000000FFFFFFFF, 64'hFFFFFFFF00000000, 32, 32);
-        else f = e;
-        //if(funct3 != 0)
-        rg_rd <= f;
-      end
+      //end
       //if(opcode == 0 && (funct3 == 1 || funct3 == 0)) begin
       //  if(funct3 == 1) f = rs1;
       //  rg_rd <= zeroExtend(pack(countZerosLSB(f)));
       //end
-      else if(opcode == 0 && funct3 == 6) begin //gzip
-        if(rs2[0] == 1) begin
-          if(rs2[1] == 1) a = gzip_stage(rs1, 64'h4444444444444444, 64'h2222222222222222, 1);
-          else a = rs1;
-          if(rs2[2] == 1) b = gzip_stage(a, 64'h3030303030303030, 64'h0c0c0c0c0c0c0c0c, 2);
-          else b = a;
-          if(rs2[3] == 1) c = gzip_stage(b, 64'h0f000f000f000f00, 64'h00f000f000f000f0, 4);
-          else c = b;
-          if(rs2[4] == 1) d = gzip_stage(c, 64'h00ff000000ff0000, 64'h0000ff000000ff00, 8);
-          else d = c;
-          if(rs2[5] == 1) e = gzip_stage(d, 64'h0000ffff00000000, 64'h00000000ffff0000, 16);
-          else e = d;
-        rg_rd <= e;
-        end  
-          else begin
-          if(rs2[5] == 1) a = gzip_stage(rs1, 64'h0000ffff00000000, 64'h00000000ffff0000, 16);
-          else a = rs1;
-          if(rs2[4] == 1) b = gzip_stage(a, 64'h00ff000000ff0000, 64'h0000ff000000ff00, 8);
-          else b = a;
-          if(rs2[3] == 1) c = gzip_stage(b, 64'h0f000f000f000f00, 64'h00f000f000f000f0, 4);
-          else c = b;
-          if(rs2[2] == 1) d = gzip_stage(c, 64'h3030303030303030, 64'h0c0c0c0c0c0c0c0c, 2);
-          else d = c;
-          if(rs2[1] == 1) e = gzip_stage(d, 64'h4444444444444444, 64'h2222222222222222, 1);
-          else e = d;
-        rg_rd <= e;
-        end
-      end
       if(opcode == 1 && funct3 == 4) begin //bit extract
         rg_x <= rs1; 
         rg_y <= rs2;

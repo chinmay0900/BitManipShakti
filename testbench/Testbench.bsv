@@ -1,4 +1,5 @@
 import ALU ::*;
+//import ALU_copy::*;
 import LFSR::*;
 import "BDPI" function Bit#(64) checker (Bit#(5) rg_opcode, Bit#(3) rg_funct3, Bit#(12) rg_imm, Bit#(64) rs1, Bit#(64) rs2);
 
@@ -11,9 +12,9 @@ module mkTestbench();
   LFSR #(Bit #(32)) lfsr_rs21 <- mkLFSR_32;
   LFSR #(Bit #(32)) lfsr_rs22 <- mkLFSR_32;
 
-  Bit#(5) rg_opcode = 'h00;
-  Bit#(3) rg_funct3 = 'h6;
-  Bit#(12) rg_imm = 'hc04;
+  Bit#(5) rg_opcode = 'h01;
+  Bit#(3) rg_funct3 = 'h3;
+  Bit#(12) rg_imm = 'h804;
   Reg#(Bit#(32)) rg_count <- mkReg(0);
   Reg#(Bool) rg_state <- mkReg(True);
   Reg#(Bit#(64)) rg_checker <- mkReg(0);

@@ -26,7 +26,9 @@ package ALU_copy;
     Reg#(Bit#(64)) rg_y <- mkReg(0);
     Reg#(Bit#(2)) rg_depext <- mkReg(0);
     Reg#(Bit#(7)) rg_count <- mkReg(0);
-
+    Reg#(Bit#(6)) rg_var <- mkReg(0);
+    Reg#(Bit#(64)) rg_p <- mkReg(0);
+    Reg#(Bit#(6)) rg_shamt <- mkReg(0);
 //opcode OP-IMM = 0 funct3 = 0 : CLZ
 //opcode OP-IMM = 0 funct3 = 1 : CTZ
 //opcode OP-IMM = 0 funct3 = 2 : PCNT
@@ -44,8 +46,8 @@ package ALU_copy;
 //opcode OP = 1 funct3 = 3 : GREV
 //opcode OP = 1 funct3 = 4 : BEXT
 //opcode OP = 1 funct3 = 5 : BDEP
-
-    rule rl_putbtdeposit(rg_depext != 0);
+ 
+    rule rl_putbtdeposit(rg_depext == 1 || rg_depext == 2);
       if((rg_x & (rg_m)) > 0 && rg_depext == 2) rg_rd <= rg_rd | (rg_y & -rg_y); //deposit
       else if((rg_x & (rg_y & -rg_y)) > 0 && rg_depext == 1) rg_rd <= rg_rd | rg_m; //extract
       rg_y <= rg_y - (rg_y & -rg_y);
@@ -56,34 +58,35 @@ package ALU_copy;
       end
     endrule
 
-    rule rl_gzip(opcode == 0 && funct3 == 6);//gzip
+    rule rl_gzip(rg_depext == 3);//gzip
 
-        Reg#(Bit#(64)) var <- mkReg(0);
-
-        if(shamt[0] == 1) begin
-          if(rg_count == 0) var <= 1;
-          else var <= var << 1;
+        if(rg_shamt[0] == 1) begin
+          if(rg_count == 0) rg_var <= 1;
+          else rg_var <= rg_var << 1;
         end
    
         else begin
-          if(rg_count == 0) var <= 16;
-          else var <= var >> 1;
+          if(rg_count == 0) rg_var <= 16;
+          else rg_var <= rg_var >> 1;
         end   
         rg_count <= rg_count + 1;
 
-        p = (var == 1) ? 64'h4444444444444444 : 64'h0000ffff00000000;
-        p = (var == 2) ? 64'h3030303030303030 : 64'h00ff000000ff0000;
-        p = (var == 4) ? 64'h0f000f000f000f00;
-        p = (var == 8) ? 64'h00ff000000ff0000 : 64'h3030303030303030;
-        p = (var == 16) ? 64'h0000ffff00000000 : 64'h4444444444444444;
+        if(rg_var == 1 && rg_count == 0) rg_p <= 64'h4444444444444444;
+        else if(rg_var == 16 && rg_count == 0)rg_p <= 64'h0000ffff00000000;
+        else if(rg_var == 2 && rg_count == 1) rg_p <= 64'h3030303030303030;
+        else if(rg_var == 8 && rg_count == 1)rg_p <= 64'h00ff000000ff0000;
+        else if(rg_var == 4 && rg_count == 2) rg_p <= 64'h0f000f000f000f00;
+        else if(rg_var == 8 && rg_count == 3) rg_p <= 64'h00ff000000ff0000;
+        else if(rg_var == 2 && rg_count == 3) rg_p <= 64'h3030303030303030;
+        else if(rg_var == 16 && rg_count == 4) rg_p <= 64'h0000ffff00000000;
+        else if(rg_var == 1 && rg_count == 4)rg_p <= 64'h4444444444444444;
         
-        if(rg_count < 6) begin            
-          let r <- gzipstage(rg_rd, p, p >> var, var);
-          rg_rd <= r;
+        if(rg_count < 5) begin            
+          rg_rd <= gzip_stage(rg_rd, rg_p, rg_p >> rg_var, rg_var);
         end
-        if(rg_count == 6) begin
+        if(rg_count == 5) begin
           rg_work <= True;
-          rg_depext <= 1;
+          rg_depext <= 0;
         end
       endrule
 
@@ -203,6 +206,12 @@ package ALU_copy;
         rg_rd <= 0;
         rg_m <= 1;
         rg_depext <= 2;
+      end
+      else if(opcode == 0 && funct3 == 6) begin //gzip
+       rg_shamt <= shamt;
+       rg_count <= 0;
+       rg_rd <= rs1;
+       rg_depext <= 3;
       end
       else rg_work <= True;
     endmethod

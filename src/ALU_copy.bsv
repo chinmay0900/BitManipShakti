@@ -59,31 +59,25 @@ package ALU_copy;
     endrule
 
     rule rl_gzip(rg_depext == 3);//gzip
+        if(rg_shamt[0] == 1)  rg_var <= rg_var << 1;
+        else if(rg_shamt[0] == 0) rg_var <= rg_var >> 1;
+ 
+        $display("value of var %d is \n", rg_var);
 
-        if(rg_shamt[0] == 1) begin
-          if(rg_count == 0) rg_var <= 1;
-          else rg_var <= rg_var << 1;
-        end
-   
-        else begin
-          if(rg_count == 0) rg_var <= 16;
-          else rg_var <= rg_var >> 1;
-        end   
-        rg_count <= rg_count + 1;
+        if(rg_var == 1) begin rg_p <= 64'h4444444444444444; rg_count <= rg_count + 1; end 
+        else if(rg_var == 2) begin rg_p <= 64'h3030303030303030; rg_count <= rg_count + 1; end 
+        else if(rg_var == 4) begin rg_p <= 64'h0f000f000f000f00; rg_count <= rg_count + 1; end
+        else if(rg_var == 8) begin rg_p <= 64'h00ff000000ff0000; rg_count <= rg_count + 1; end
+        else if(rg_var == 16) begin rg_p <= 64'h0000ffff00000000; rg_count <= rg_count + 1; end
+       
+        $display("value of rg_p %h is \n", rg_p);
 
-        if(rg_var == 1 && rg_count == 0) rg_p <= 64'h4444444444444444;
-        else if(rg_var == 16 && rg_count == 0)rg_p <= 64'h0000ffff00000000;
-        else if(rg_var == 2 && rg_count == 1) rg_p <= 64'h3030303030303030;
-        else if(rg_var == 8 && rg_count == 1)rg_p <= 64'h00ff000000ff0000;
-        else if(rg_var == 4 && rg_count == 2) rg_p <= 64'h0f000f000f000f00;
-        else if(rg_var == 8 && rg_count == 3) rg_p <= 64'h00ff000000ff0000;
-        else if(rg_var == 2 && rg_count == 3) rg_p <= 64'h3030303030303030;
-        else if(rg_var == 16 && rg_count == 4) rg_p <= 64'h0000ffff00000000;
-        else if(rg_var == 1 && rg_count == 4)rg_p <= 64'h4444444444444444;
-        
         if(rg_count < 5) begin            
-          rg_rd <= gzip_stage(rg_rd, rg_p, rg_p >> rg_var, rg_var);
+          let r = gzip_stage(rg_rd, rg_p, rg_p >> rg_var, rg_var);
+          $display("rg_rd : %h rg_p : %h rg_p >> rg_var : %h rg_var : %d \n", rg_rd, rg_p, rg_p >> rg_var, rg_var);
+          rg_rd <= r;
         end
+         
         if(rg_count == 5) begin
           rg_work <= True;
           rg_depext <= 0;
@@ -212,6 +206,8 @@ package ALU_copy;
        rg_count <= 0;
        rg_rd <= rs1;
        rg_depext <= 3;
+       rg_var <= (shamt[0] == 1) ? 1 : 16;
+       rg_p <= (shamt[0] == 1) ? 64'h4444444444444444 : 64'h0000ffff00000000; 
       end
       else rg_work <= True;
     endmethod

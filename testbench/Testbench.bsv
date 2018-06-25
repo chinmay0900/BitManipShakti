@@ -1,7 +1,7 @@
 import ALU ::*;
 //import ALU_copy::*;
 import LFSR::*;
-import "BDPI" function Bit#(64) checker (Bit#(5) rg_opcode, Bit#(3) rg_funct3, Bit#(12) rg_imm, Bit#(64) rs1, Bit#(64) rs2);
+import "BDPI" function Bit#(64) checker (Bit#(7) rg_opcode, Bit#(3) rg_funct3, Bit#(12) rg_imm, Bit#(64) rs1, Bit#(64) rs2);
 
 (*synthesize*)
 module mkTestbench();
@@ -12,8 +12,26 @@ module mkTestbench();
   LFSR #(Bit #(32)) lfsr_rs21 <- mkLFSR_32;
   LFSR #(Bit #(32)) lfsr_rs22 <- mkLFSR_32;
 
-  Bit#(5) rg_opcode = 'h01;
-  Bit#(3) rg_funct3 = 'h3;
+//opcode OP-IMM = 0 funct3 = 0 : CLZ             'h000/1/2/3
+//opcode OP-IMM = 0 funct3 = 1 : CTZ             'h004/5/6/7
+//opcode OP-IMM = 0 funct3 = 2 : PCNT            'h008/9/a/b
+//opcode OP-IMM = 0 funct3 = 3 imm = 8**: SLOI   'h00e
+//opcode OP-IMM = 0 funct3 = 4 imm = 8**: SROI   'h012
+//opcode OP-IMM = 0 funct3 = 3 imm = c**: RORI   'h00f
+//opcode OP-IMM = 0 funct3 = 5 : GREVI           'h014/5/6/7
+//opcode OP-IMM = 0 funct3 = 6 : GZIP            'h018/9/a/b
+
+//opcode OP = 4 funct3 = 0 : ANDC                'h080/1/2/3
+//opcode OP = 4 funct3 = 1 imm = 8**: SRO        'h086
+//opcode OP = 4 funct3 = 2 imm = 8**: SLO        'h08a
+//opcode OP = 4 funct3 = 1 imm = c**: ROR        'h087
+//opcode OP = 4 funct3 = 2 imm = c**: ROL        'h08b
+//opcode OP = 4 funct3 = 3 : GREV                'h08c/d/e/f
+//opcode OP = 4 funct3 = 4 : BEXT                'h090/1/2/3
+//opcode OP = 4 funct3 = 5 : BDEP                'h094/5/6/7
+
+  Bit#(7) rg_opcode = 'h00;
+  Bit#(3) rg_funct3 = 'h1;
   Bit#(12) rg_imm = 'h804;
   Reg#(Bit#(32)) rg_count <- mkReg(0);
   Reg#(Bool) rg_state <- mkReg(True);
@@ -32,7 +50,7 @@ module mkTestbench();
     Bit#(64) rs2;
     rs1 = {lfsr_rs11.value,lfsr_rs12.value};
     rs2 = {lfsr_rs21.value,lfsr_rs22.value};
-    $display($time, "\tInputs: rs1: %h rs2: %h \n\t\t\topcode: %h funct3: %h imm:%h\n", rs1, rs2, rg_opcode, rg_funct3, rg_imm);
+    //$display($time, "\tInputs: rs1: %h rs2: %h \n\t\t\topcode: %h funct3: %h imm:%h\n", rs1, rs2, rg_opcode, rg_funct3, rg_imm);
     alu.ma_start(rg_opcode, rg_funct3, rg_imm, rs1, rs2);
     rg_checker <= checker(rg_opcode, rg_funct3, rg_imm, rs1, rs2);
     lfsr_rs11.next();
@@ -45,10 +63,10 @@ module mkTestbench();
 
   rule rl_store(rg_count > 1);
     let rd = alu.mn_done;
-    if(rg_checker == rd) $display($time,"\tOutput:Program-%h or Checker-%h\n Passed", rd, rg_checker);
+    //if(rg_checker == rd) $display($time,"\tOutput:Program-%h or Checker-%h\n Passed", rd, rg_checker);
     if(rg_checker != rd) $display($time,"\tOutput:Program-%h or Checker-%h\n Failed", rd, rg_checker);
     //rg_state <= True;
-    if(rg_count == 100) $finish;
+    if(rg_count == 100000001) $finish;
   endrule
 /*
   rule rl_start(rg_state);

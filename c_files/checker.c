@@ -37,22 +37,22 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
       rd = count;
     }
 
-  if(opcode == 1 && funct3 == 0)//andc
+  if(opcode == 4 && funct3 == 0)//andc
     rd = rs1 & ~rs2;
 
-  if((opcode == 1 && funct3 == 1 && y == 0x800) || (opcode == 0 && funct3 == 4 && y == 0x800))//sro sroi
+  if((opcode == 4 && funct3 == 1 && y == 0x800) || (opcode == 0 && funct3 == 4 && y == 0x800))//sro sroi
     rd = (~(~rs1 >> shamt));
 
-  if((opcode == 1 && funct3 == 2 && y == 0x800) || (opcode == 0 && funct3 == 3 && y == 0x800))//slo sloi
+  if((opcode == 4 && funct3 == 2 && y == 0x800) || (opcode == 0 && funct3 == 3 && y == 0x800))//slo sloi
     rd = (~(~rs1 << shamt));
 
-  if((opcode == 1 && funct3 == 1 && y == 0xc00) || (opcode == 0 && funct3 == 3 && y == 0xc00))//ror rori
+  if((opcode == 4 && funct3 == 1 && y == 0xc00) || (opcode == 0 && funct3 == 3 && y == 0xc00))//ror rori
     rd = ((rs1 >> shamt) | (rs1 << (64 - shamt)));
 
-  if(opcode == 1 && funct3 == 2 && y == 0xc00)//rol
+  if(opcode == 4 && funct3 == 2 && y == 0xc00)//rol
     rd = ((rs1 << shamt) | (rs1 >> (64 - shamt)));
 
-  if((opcode == 1 && funct3 == 3)||(opcode == 0 && (funct3 == 5)))//grev grevi
+  if((opcode == 4 && funct3 == 3)||(opcode == 0 && (funct3 == 5)))//grev grevi
     {
 
       if(shamt & 1)
@@ -104,7 +104,7 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
       rd = x;
     }
 
-  if(opcode == 1 && funct3 == 4)//bit extract
+  if(opcode == 4 && funct3 == 4)//bit extract
     {
      unsigned long long r = 0;
      for (int i = 0, j = 0; i < 64; i++)
@@ -117,7 +117,7 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
      rd = r;
     }
 
-  else if(opcode == 1 && funct3 == 5)//bit deposit
+  else if(opcode == 4 && funct3 == 5)//bit deposit
     {
       unsigned long long r = 0;
       for (int i = 0, j = 0; i < 64; i++)

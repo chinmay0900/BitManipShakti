@@ -30,12 +30,12 @@ package ALU;
     Reg#(Bit#(6)) rg_shamt <- mkReg(0);
     Wrapper#(Tuple5#(Bit#(64), Bit#(64), Bit#(64), Bit#(7), Bit#(7)),  Bit#(64)) ureverse <- mkUniqueWrapper(reverse);
 
-    rule rl_putbtdeposit(rg_depext == 2 || rg_depext == 3);
+    rule rl_putbtdeposit(rg_depext == 2 || rg_depext == 3); //bit extract and deposit
       if((rg_x & (rg_m)) > 0 && rg_depext == 3) rg_rd <= rg_rd | (rg_y & -rg_y); //deposit
       else if((rg_x & (rg_y & -rg_y)) > 0 && rg_depext == 2) rg_rd <= rg_rd | rg_m; //extract
       rg_y <= rg_y - (rg_y & -rg_y);
       rg_m <= rg_m << 1;
-      if (rg_y == 0) rg_depext<= 1;
+      if (rg_y == 0) rg_depext<= 0;
       else rg_depext <= rg_depext;
     endrule
 
@@ -176,7 +176,7 @@ package ALU;
       case (funsel)
         'h090, 'h091, 'h092, 'h093 : rg_depext <= 2;
         'h094, 'h095, 'h096, 'h097 : rg_depext <= 3;
-        default : rg_depext <= 1;
+        default : rg_depext <= 0;
       endcase
 
 //      if((opcode == 1 && funct3 == 3) || (opcode == 0 && funct3 == 5)) begin //serial grev grevi
@@ -194,7 +194,7 @@ package ALU;
 
     endmethod
 
-    method Bit#(64) mn_done if(rg_depext == 1);
+    method Bit#(64) mn_done if(rg_depext == 0);
       return rg_rd;
     endmethod
 

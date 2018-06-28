@@ -53,8 +53,8 @@ module mkTestbench();
     rs2 = {lfsr_rs21.value,lfsr_rs22.value};
     opcode = {4'b0,lfsr_opcode.value[11],2'b00};
     funct3 = lfsr_opcode.value[5:3];
-    imm = lfsr_opcode.value[27:16];
-    $display($time, "\tInputs: rs1: %h rs2: %h \n\t\t\topcode: %h funct3: %h imm:%h\n", rs1, rs2, opcode, funct3, imm);
+    imm = {lfsr_opcode.value[27:16]};
+    //$display($time, "\tInputs: rs1: %h rs2: %h \n\t\t\topcode: %h funct3: %h imm:%h\n", rs1, rs2, opcode, funct3, imm);
     alu.ma_start(opcode, funct3, imm, rs1, rs2);
     rg_checker <= checker(opcode, funct3, imm, rs1, rs2);
     lfsr_rs11.next();
@@ -68,10 +68,10 @@ module mkTestbench();
 
   rule rl_store(rg_count > 1);
     let rd = alu.mn_done;
-    if(rg_checker == rd) $display($time,"\tOutput:Program-%h or Checker-%h\n Passed", rd, rg_checker);
-    if(rg_checker != rd) $display($time,"\tOutput:Program-%h or Checker-%h\n Failed", rd, rg_checker);
+    //if(rg_checker == rd) $display("P");//$display($time,"\tOutput:Program-%h or Checker-%h\n Passed", rd, rg_checker);
+    if(rg_checker != rd) $display("Z");//$display($time,"\tOutput:Program-%h or Checker-%h\n Failed", rd, rg_checker);
     //rg_state <= True;
-    if(rg_count == 1000001) $finish;
+    if(rg_count == 10000001) $finish;
   endrule
 /*
   rule rl_start(rg_state);

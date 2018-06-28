@@ -100,6 +100,7 @@ package ALU;
         'h086,'h08a, 'h087, 'h08c, 'h08d, 'h08e, 'h08f, 'h018, 'h019, 'h01a, 'h01b : shamt = truncate(rs2);
         'h08b : shamt = truncate('h40 - rs2);
         'h00e, 'h012, 'h00f, 'h014, 'h015, 'h016, 'h017: shamt = truncate(imm);
+        'h02e : shamt = 'h3f;
       endcase
 
       case(funsel)
@@ -110,6 +111,8 @@ package ALU;
           let temp <- ureverse.func(tuple5(rs1, ~rs2, 'h0, 'h0, 'h0));
           rg_rd <= temp;
         end
+        'h02c : rg_rd <= (~rs1) + 1; //cneg
+        'h02d : rg_rd <= ~rs1; //cnot
         'h086, 'h012 : begin //sro sroi
           let temp <- ureverse.func(tuple5(~rs1, 'h0, 'hffffffffffffffff, 'h0, {1'b0,shamt}));
           rg_rd <= ~temp;
@@ -122,7 +125,7 @@ package ALU;
           let temp <- ureverse.func(tuple5(rs1, 'hffffffffffffffff, 'hffffffffffffffff, (64 - {1'b0,shamt}), {1'b0,shamt}));
           rg_rd <= temp;
         end
-        'h08c, 'h08d, 'h08e, 'h08f, 'h014, 'h015, 'h016, 'h017 : begin //grev grevi
+        'h08c, 'h08d, 'h08e, 'h08f, 'h014, 'h015, 'h016, 'h017, 'h02e : begin //grev grevi
           if(shamt[0] == 1) a = reverse(tuple5(rs1, 64'h5555555555555555, 64'hAAAAAAAAAAAAAAAA, 1, 1));
           else a = rs1;
           if(shamt[1] == 1) b = reverse(tuple5(a, 64'h3333333333333333, 64'hCCCCCCCCCCCCCCCC, 2, 2));

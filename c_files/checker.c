@@ -10,17 +10,25 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
 
   if(opcode == 0 && (((funct3 == 3|| funct3 == 4) && (y == 0x800 || y == 0xc00)) || funct3 == 5))
 		shamt = imm & (63);
+  else if(opcode == 1 && funct3 == 3 && imm == 2)
+    shamt = 0x3f; //cbrev
   else	
 		shamt = rs2 & (63);
 
-  if(opcode == 0 && funct3 == 0)
+  if(opcode == 1 && funct3 == 3 && imm == 1) //cnot
+    return(~rs1);
+  
+  if(opcode == 1 && funct3 == 3 && imm == 0) //cneg
+    return((~rs1) + 1);
+
+  if(opcode == 0 && funct3 == 0) //clz
     {for (int count = 0; count < 64; count++)
 			{if ((rs1 << count) >> (63))
 				{return count;}}
 		return 64;
 		}
 
-	if(opcode == 0 && funct3 == 1)
+	if(opcode == 0 && funct3 == 1) //ctz
 		{for (int count = 0; count < 64; count++)
 			{if ((rs1 >> count) & 1)
 				{return count;}}
@@ -52,7 +60,7 @@ unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned 
   if(opcode == 4 && funct3 == 2 && y == 0xc00)//rol
     rd = ((rs1 << shamt) | (rs1 >> (64 - shamt)));
 
-  if((opcode == 4 && funct3 == 3)||(opcode == 0 && (funct3 == 5)))//grev grevi
+  if((opcode == 4 && funct3 == 3)||(opcode == 0 && funct3 == 5)||(opcode == 1 && funct3 == 3 && imm == 2))//grev grevi
     {
 
       if(shamt & 1)

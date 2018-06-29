@@ -2,15 +2,16 @@ package ALU;
 
   import DReg::*;
   import UniqueWrappers::*;
+  import Vector::*;
   interface Ifc_ALU;
     method Action ma_start(Bit#(7) opcode, Bit#(3) funct3, Bit#(12) imm, Bit#(64) rs1, Bit#(64) rs2); 
     method Bit#(64) mn_done;
   endinterface
 
   (*noinline*)
-  function Bit#(64) reverse(Tuple5#(Bit#(64), Bit#(64), Bit#(64), Bit#(7), Bit#(7)) inp);
-    let {src, sl, sr, lnum, rnum}=inp;
-    return (((src & sl) << lnum) | ((src & sr) >> rnum));
+  function Bit#(64) notrotate(Tuple4#(Bit#(64), Bit#(1), Bit#(1), Bit#(7)) inp);
+    let {src, sl, sr, lnum}=inp;
+    return (((~src & signExtend(sl)) << lnum) | ((~src & signExtend(sr)) >> ('h40 - lnum)));
   endfunction
 
   (*noinline*)
@@ -28,40 +29,29 @@ package ALU;
     Reg#(Bit#(3)) rg_depext <- mkDReg(0);
     Reg#(Bit#(7)) rg_count <- mkReg(0);
     Reg#(Bit#(6)) rg_shamt <- mkReg(0);
-    Wrapper#(Tuple5#(Bit#(64), Bit#(64), Bit#(64), Bit#(7), Bit#(7)),  Bit#(64)) ureverse <- mkUniqueWrapper(reverse);
+    Wrapper#(Tuple4#(Bit#(64), Bit#(1), Bit#(1), Bit#(7)),  Bit#(64)) ureverse <- mkUniqueWrapper(notrotate);
 
-    rule rl_putbtdeposit(rg_depext == 2 || rg_depext == 3); //bit extract and deposit
-      if((rg_x & (rg_m)) > 0 && rg_depext == 3) rg_rd <= rg_rd | (rg_y & -rg_y); //deposit
-      else if((rg_x & (rg_y & -rg_y)) > 0 && rg_depext == 2) rg_rd <= rg_rd | rg_m; //extract
+    rule rl_putbtdeposit(rg_depext == 1 || rg_depext == 2); //bit extract and deposit
+      if((rg_x & (rg_m)) > 0 && rg_depext == 2) rg_rd <= rg_rd | (rg_y & -rg_y); //deposit
+      else if((rg_x & (rg_y & -rg_y)) > 0 && rg_depext == 1) rg_rd <= rg_rd | rg_m; //extract
       rg_y <= rg_y - (rg_y & -rg_y);
       rg_m <= rg_m << 1;
-      if (rg_y == 0) rg_depext<= 0;
+      if (rg_y != 0) rg_depext <= rg_depext;
+    endrule
+
+    rule rl_greverse(rg_depext == 3);
+      Vector#(64,bit) buffer_bfly_unzip = replicate(0);
+      for(Integer i=0; i<32; i=i+1) begin
+        buffer_bfly_unzip[i] = ((rg_m & rg_y) != 0) ? rg_x[(2*i)+1] : rg_x[2*i];
+        buffer_bfly_unzip[32+i] = ((rg_m & rg_y) != 0) ? rg_x[2*i] : rg_x[(2*i)+1];
+      end
+      rg_x <= pack(buffer_bfly_unzip);
+      //$display("\nrg_rd : %h, rg_m : %h, rg_x : %h\n",rg_rd, rg_m, rg_x);
+      rg_m <= rg_m << 1;
+      if(rg_m==32) begin rg_depext <= 0; rg_rd <= pack(buffer_bfly_unzip); end
       else rg_depext <= rg_depext;
     endrule
 
-//    rule rl_greverse(rg_depext == 3);
-//      Bit#(64) y = 0;
-//      Int#(4) count = 0;
-//      case(rg_count)
-//      'h1 : y = 64'h5555555555555555;
-//      'h2 : begin y = 64'h3333333333333333; count = 1; end
-//      'h4 : begin y = 64'h0F0F0F0F0F0F0F0F; count = 2; end
-//      'h8 : begin y = 64'h00FF00FF00FF00FF; count = 3; end
-//      'h10 : begin y = 64'h0000FFFF0000FFFF; count = 4; end
-//      'h20 : begin y = 64'h00000000FFFFFFFF; count = 5; end
-//      endcase
-//      if(rg_shamt[count] == 1) begin
-//        let temp <- ureverse.func(tuple5(rg_rd, y, ~y, rg_count, rg_count));//grev
-//        rg_rd <= temp;
-//      end
-//      rg_count <= rg_count << 1;
-//      //$display("\nrg_rd : %h, rg_count : %h, count : %h\n",rg_rd, rg_count, count);
-//      if(rg_count == 'h20) begin
-//        rg_work <= True;
-//        rg_depext <= 0;
-//      end
-//      endrule
-//
 //    rule rl_gzip(rg_depext == 4);//gzip
 //      Bit#(64) x=0;
 //      Int#(4) count = 0;
@@ -97,10 +87,12 @@ package ALU;
       Bit#(6) shamt = 0;
 
       case(funsel)
-        'h086,'h08a, 'h087, 'h08c, 'h08d, 'h08e, 'h08f, 'h018, 'h019, 'h01a, 'h01b : shamt = truncate(rs2);
-        'h08b : shamt = truncate('h40 - rs2);
-        'h00e, 'h012, 'h00f, 'h014, 'h015, 'h016, 'h017: shamt = truncate(imm);
-        'h02e : shamt = 'h3f;
+        'h08a, 'h08b, 'h08c, 'h08d, 'h08e, 'h08f, 'h018, 'h019, 'h01a, 'h01b : shamt = truncate(rs2);
+        'h086, 'h087 : shamt = truncate('h40-rs2);
+        'h00e  : shamt = truncate(imm);
+        'h012, 'h00f: shamt = truncate('h40 - {1'b0,imm[5:0]}); 
+        'h02e : rs2 = zeroExtend(6'h3f);
+        'h014, 'h015, 'h016, 'h017 : rs2 = zeroExtend(imm[6:0]);
       endcase
 
       case(funsel)
@@ -108,38 +100,38 @@ package ALU;
         'h004, 'h005, 'h006, 'h007 : rg_rd <= zeroExtend(pack(countZerosLSB(rs1))); //ctz
         'h008, 'h009, 'h00a, 'h00b : rg_rd <= zeroExtend(pack(countOnes(rs1))); //pcnt 
         'h080, 'h081, 'h082, 'h083 : begin  //andwithc
-          let temp <- ureverse.func(tuple5(rs1, ~rs2, 'h0, 'h0, 'h0));
-          rg_rd <= temp;
+//          let temp <- ureverse.func(tuple5(rs1, ~rs2, 'h0, 'h0, 'h0));
+          rg_rd <= rs1&(~rs2);//temp; 
         end
         'h02c : rg_rd <= (~rs1) + 1; //cneg
         'h02d : rg_rd <= ~rs1; //cnot
         'h086, 'h012 : begin //sro sroi
-          let temp <- ureverse.func(tuple5(~rs1, 'h0, 'hffffffffffffffff, 'h0, {1'b0,shamt}));
+          let temp <- ureverse.func(tuple4(rs1, (1'h0), (1'h1), {1'b0,shamt}));
           rg_rd <= ~temp;
         end
         'h08a, 'h00e : begin //slo sloi
-          let temp <- (ureverse.func(tuple5(~rs1, 'hffffffffffffffff, 'h0, {1'b0,shamt}, 'h0)));
+          let temp <- (ureverse.func(tuple4(rs1, (1'h1), (1'h0), {1'b0,shamt})));
           rg_rd <= ~temp;
         end
         'h087, 'h00f, 'h08b : begin //ror rori rol
-          let temp <- ureverse.func(tuple5(rs1, 'hffffffffffffffff, 'hffffffffffffffff, (64 - {1'b0,shamt}), {1'b0,shamt}));
+          let temp <- ureverse.func(tuple4(~rs1, (1'h1), (1'h1), {1'b0,shamt}));
           rg_rd <= temp;
         end
-        'h08c, 'h08d, 'h08e, 'h08f, 'h014, 'h015, 'h016, 'h017, 'h02e : begin //grev grevi
-          if(shamt[0] == 1) a = reverse(tuple5(rs1, 64'h5555555555555555, 64'hAAAAAAAAAAAAAAAA, 1, 1));
-          else a = rs1;
-          if(shamt[1] == 1) b = reverse(tuple5(a, 64'h3333333333333333, 64'hCCCCCCCCCCCCCCCC, 2, 2));
-          else b = a;
-          if(shamt[2] == 1) c = reverse(tuple5(b, 64'h0F0F0F0F0F0F0F0F, 64'hF0F0F0F0F0F0F0F0, 4, 4));
-          else c = b;
-          if(shamt[3] == 1) d = reverse(tuple5(c, 64'h00FF00FF00FF00FF, 64'hFF00FF00FF00FF00, 8, 8));
-          else d = c;
-          if(shamt[4] == 1) e = reverse(tuple5(d, 64'h0000FFFF0000FFFF, 64'hFFFF0000FFFF0000, 16, 16));
-          else e = d;
-          if(shamt[5] == 1) f = reverse(tuple5(e, 64'h00000000FFFFFFFF, 64'hFFFFFFFF00000000, 32, 32));
-          else f = e;
-          rg_rd <= f;
-        end
+ //       'h08c, 'h08d, 'h08e, 'h08f, 'h014, 'h015, 'h016, 'h017, 'h02e : begin //grev grevi
+ //         if(rs2[0] == 1) a = reverse(tuple5(rs1, 64'h5555555555555555, 64'hAAAAAAAAAAAAAAAA, 1, 1));
+ //         else a = rs1;
+ //         if(rs2[1] == 1) b = reverse(tuple5(a, 64'h3333333333333333, 64'hCCCCCCCCCCCCCCCC, 2, 2));
+ //         else b = a;
+ //         if(rs2[2] == 1) c = reverse(tuple5(b, 64'h0F0F0F0F0F0F0F0F, 64'hF0F0F0F0F0F0F0F0, 4, 4));
+ //         else c = b;
+ //         if(rs2[3] == 1) d = reverse(tuple5(c, 64'h00FF00FF00FF00FF, 64'hFF00FF00FF00FF00, 8, 8));
+ //         else d = c;
+ //         if(rs2[4] == 1) e = reverse(tuple5(d, 64'h0000FFFF0000FFFF, 64'hFFFF0000FFFF0000, 16, 16));
+ //         else e = d;
+ //         if(rs2[5] == 1) f = reverse(tuple5(e, 64'h00000000FFFFFFFF, 64'hFFFFFFFF00000000, 32, 32));
+ //         else f = e;
+ //         rg_rd <= f;
+ //       end
         'h018, 'h019, 'h01a, 'h01b : begin //gzip
         if(shamt[0] == 1) begin
             if(shamt[1] == 1) a = gzip_stage(rs1, 64'h4444444444444444, 64'h2222222222222222, 1);
@@ -177,8 +169,9 @@ package ALU;
       endcase
 
       case (funsel)
-        'h090, 'h091, 'h092, 'h093 : rg_depext <= 2;
-        'h094, 'h095, 'h096, 'h097 : rg_depext <= 3;
+        'h090, 'h091, 'h092, 'h093 : rg_depext <= 1;
+        'h094, 'h095, 'h096, 'h097 : rg_depext <= 2;
+        'h08c, 'h08d, 'h08e, 'h08f, 'h014, 'h015, 'h016, 'h017, 'h02e : rg_depext <= 3; 
         default : rg_depext <= 0;
       endcase
 

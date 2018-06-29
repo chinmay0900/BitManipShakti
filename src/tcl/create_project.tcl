@@ -33,7 +33,7 @@ add_files -norecurse -fileset [get_filesets sources_1] $home_dir/verilog/
 set_property include_dirs $home_dir/verilog/ [get_filesets sources_1]
 
 # Set 'sources_1' fileset properties
-set_property "top" "mkSoC" [get_filesets sources_1]
+set_property "top" "mkALU" [get_filesets sources_1]
 
 # Create 'constrs_1' fileset (if not found)
 if {[string equal [get_filesets -quiet constrs_1] ""]} {

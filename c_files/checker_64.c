@@ -1,6 +1,6 @@
 #include<stdio.h>
 
-unsigned long long checker(unsigned char opcode, unsigned char funct3, unsigned int imm, unsigned long long rs1, unsigned long long rs2)
+unsigned long long checker_64(unsigned char opcode, unsigned char funct3, unsigned int imm, unsigned long long rs1, unsigned long long rs2)
 {
 
   unsigned char shamt;

@@ -1,12 +1,13 @@
 ### Makefile for the srio
 
-TOP_MODULE:=mkALU
-TOP_FILE:=ALU.bsv
+TOP_MODULE:=mkTestbench
+TOP_FILE:=Testbench.bsv
 HOMEDIR:=./
-TOP_DIR:=./src
+TOP_DIR:=./testbench
 BSVBUILDDIR:=./build/
 VERILOGDIR:=./verilog/
 FILES:= ./src/:./testbench/
+DEFINED_MACROS:= -D RV64=True
 BSVINCDIR:= .:%/Prelude:%/Libraries:%/Libraries/BlueNoC:$(FILES)
 FPGA=xc7a100tcsg324-1
 export HOMEDIR=./
@@ -20,14 +21,14 @@ timing_area: full_clean generate_verilog vivado_build
 compile:
 	@echo Compiling $(TOP_MODULE)....
 	@mkdir -p $(BSVBUILDDIR)
-	@bsc -u -sim -simdir $(BSVBUILDDIR) -bdir $(BSVBUILDDIR) -info-dir $(BSVBUILDDIR) -keep-fires -p $(BSVINCDIR) -g $(TOP_MODULE)  $(TOP_DIR)/$(TOP_FILE)
+	@bsc -u -sim -simdir $(BSVBUILDDIR) -bdir $(BSVBUILDDIR) -info-dir $(BSVBUILDDIR) $(DEFINED_MACROS) -keep-fires -p $(BSVINCDIR) -g $(TOP_MODULE)  $(TOP_DIR)/$(TOP_FILE)
 	@echo Compilation finished
 
 .PHONY: link
 link:
 	@echo Linking $(TOP_MODULE)...
 	@mkdir -p bin
-	@bsc -e $(TOP_MODULE) -sim -o ./bin/out -simdir $(BSVBUILDDIR) -p .:%/Prelude:%/Libraries:%/Libraries/BlueNoC:./c_files -keep-fires -bdir $(BSVBUILDDIR) -keep-fires ./c_files/checker.c    
+	@bsc -e $(TOP_MODULE) -sim -o ./bin/out -simdir $(BSVBUILDDIR) -p .:%/Prelude:%/Libraries:%/Libraries/BlueNoC:./c_files -keep-fires -bdir $(BSVBUILDDIR) -keep-fires ./c_files/checker_32.c ./c_files/checker_64.c   
 	@echo Linking finished
 
 .PHONY: generate_verilog 

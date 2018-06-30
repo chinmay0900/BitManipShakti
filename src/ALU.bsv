@@ -1,54 +1,63 @@
 package ALU;
 
+  `ifdef RV64
+    typedef 64 XLEN;
+  `else
+    typedef 32 XLEN;
+  `endif
+
   import DReg::*;
   import UniqueWrappers::*;
   import Vector::*;
   interface Ifc_ALU;
-    method Action ma_start(Bit#(7) opcode, Bit#(3) funct3, Bit#(12) imm, Bit#(64) rs1, Bit#(64) rs2); 
-    method Bit#(64) mn_done;
+    method Action ma_start(Bit#(7) opcode, Bit#(3) funct3, Bit#(12) imm, Bit#(XLEN) rs1, Bit#(XLEN) rs2); 
+    method Bit#(XLEN) mn_done;
   endinterface
 
   (*noinline*)
-  function Bit#(64) notrotate(Tuple4#(Bit#(64), Bit#(1), Bit#(1), Bit#(7)) inp);
+  function Bit#(XLEN) notrotate(Tuple4#(Bit#(XLEN), Bit#(1), Bit#(1), Bit#(7)) inp);
     let {src, sl, sr, lnum}=inp;
-    return (((~src & signExtend(sl)) << lnum) | ((~src & signExtend(sr)) >> ('h40 - lnum)));
+    return (((~src & signExtend(sl)) << lnum) | ((~src & signExtend(sr)) >> (fromInteger(valueOf(XLEN)) - lnum)));
   endfunction
 
   (*noinline*)
-  function Bit#(64) gzip_stage(Bit#(64) src, Bit#(64) sl, Bit#(64) sr, Bit#(6) num);
-    return ((src & (~(sl | sr))) | ((src << num) & sl) | ((src >> num) & sr));
+  function Bit#(XLEN) gzip_stage(Bit#(XLEN) src, Bit#(64) sl, Bit#(64) sr, Bit#(6) num);
+    return (truncate((zeroExtend(src) & (~(sl | sr))) | ((zeroExtend(src) << num) & sl) | ((zeroExtend(src) >> num) & sr)));
   endfunction
 
   (*synthesize*)
   module mkALU(Ifc_ALU);
 
-    Reg#(Bit#(64)) rg_rd <- mkReg(0);
-    Reg#(Bit#(64)) rg_m <- mkReg(1);
-    Reg#(Bit#(64)) rg_x <- mkReg(0);
-    Reg#(Bit#(64)) rg_y <- mkReg(0);
+    Integer size = valueOf(XLEN);
+
+    Reg#(Bit#(XLEN)) rg_rd <- mkReg(0);
+    Reg#(Bit#(XLEN)) rg_m <- mkReg(1);
+    Reg#(Bit#(XLEN)) rg_x <- mkReg(0);
+    Reg#(Bit#(XLEN)) rg_y <- mkReg(0);
     Reg#(Bit#(3)) rg_depext <- mkDReg(0);
     Reg#(Bit#(7)) rg_count <- mkReg(0);
     Reg#(Bit#(6)) rg_shamt <- mkReg(0);
-    Wrapper#(Tuple4#(Bit#(64), Bit#(1), Bit#(1), Bit#(7)),  Bit#(64)) ureverse <- mkUniqueWrapper(notrotate);
+    Wrapper#(Tuple4#(Bit#(XLEN), Bit#(1), Bit#(1), Bit#(7)),  Bit#(XLEN)) unotrotate <- mkUniqueWrapper(notrotate);
 
     rule rl_putbtdeposit(rg_depext == 1 || rg_depext == 2); //bit extract and deposit
-      if((rg_x & (rg_m)) > 0 && rg_depext == 2) rg_rd <= rg_rd | (rg_y & -rg_y); //deposit
-      else if((rg_x & (rg_y & -rg_y)) > 0 && rg_depext == 1) rg_rd <= rg_rd | rg_m; //extract
-      rg_y <= rg_y - (rg_y & -rg_y);
+      let lastsetbit = (rg_y & (-rg_y));
+      if((rg_x & (rg_m)) > 0 && rg_depext == 2) rg_rd <= rg_rd | lastsetbit; //deposit
+      else if((rg_x & lastsetbit) > 0 && rg_depext == 1) rg_rd <= rg_rd | rg_m; //extract
+      rg_y <= rg_y - lastsetbit;
       rg_m <= rg_m << 1;
       if (rg_y != 0) rg_depext <= rg_depext;
     endrule
 
     rule rl_greverse(rg_depext == 3);
-      Vector#(64,bit) buffer_bfly_unzip = replicate(0);
-      for(Integer i=0; i<32; i=i+1) begin
+      Vector#(XLEN,bit) buffer_bfly_unzip = replicate(0);
+      for(Integer i=0; i<size/2; i=i+1) begin
         buffer_bfly_unzip[i] = ((rg_m & rg_y) != 0) ? rg_x[(2*i)+1] : rg_x[2*i];
-        buffer_bfly_unzip[32+i] = ((rg_m & rg_y) != 0) ? rg_x[2*i] : rg_x[(2*i)+1];
+        buffer_bfly_unzip[(size/2)+i] = ((rg_m & rg_y) != 0) ? rg_x[2*i] : rg_x[(2*i)+1];
       end
       rg_x <= pack(buffer_bfly_unzip);
       //$display("\nrg_rd : %h, rg_m : %h, rg_x : %h\n",rg_rd, rg_m, rg_x);
       rg_m <= rg_m << 1;
-      if(rg_m==32) begin rg_depext <= 0; rg_rd <= pack(buffer_bfly_unzip); end
+      if(rg_m==fromInteger(size/2)) begin rg_depext <= 0; rg_rd <= pack(buffer_bfly_unzip); end
       else rg_depext <= rg_depext;
     endrule
 
@@ -80,11 +89,11 @@ package ALU;
 //      end
 //    endrule
 
-    method Action ma_start(Bit#(7) opcode, Bit#(3) funct3, Bit#(12) imm, Bit#(64) rs1, Bit#(64)
+    method Action ma_start(Bit#(7) opcode, Bit#(3) funct3, Bit#(12) imm, Bit#(XLEN) rs1, Bit#(XLEN)
     rs2)if(rg_depext==0); 
-      Bit#(64) a = 0, b = 0, c = 0, d = 0, e = 0, f = 0;
+      Bit#(XLEN) a = 0, b = 0, c = 0, d = 0, e = 0;
       Bit#(12) funsel = {opcode,funct3,imm[11:10]};
-      Bit#(6) shamt = 0;
+      Bit#(TLog#(XLEN)) shamt = 0;
 
       case(funsel)
         'h08a, 'h08b, 'h08c, 'h08d, 'h08e, 'h08f, 'h018, 'h019, 'h01a, 'h01b : shamt = truncate(rs2);
@@ -106,15 +115,15 @@ package ALU;
         'h02c : rg_rd <= (~rs1) + 1; //cneg
         'h02d : rg_rd <= ~rs1; //cnot
         'h086, 'h012 : begin //sro sroi
-          let temp <- ureverse.func(tuple4(rs1, (1'h0), (1'h1), {1'b0,shamt}));
+          let temp <- unotrotate.func(tuple4(rs1, (1'h0), (1'h1),(shamt==0)?fromInteger(valueOf(XLEN)):zeroExtend(shamt)));
           rg_rd <= ~temp;
         end
         'h08a, 'h00e : begin //slo sloi
-          let temp <- (ureverse.func(tuple4(rs1, (1'h1), (1'h0), {1'b0,shamt})));
+          let temp <- (unotrotate.func(tuple4(rs1, (1'h1), (1'h0), zeroExtend(shamt))));
           rg_rd <= ~temp;
         end
         'h087, 'h00f, 'h08b : begin //ror rori rol
-          let temp <- ureverse.func(tuple4(~rs1, (1'h1), (1'h1), {1'b0,shamt}));
+          let temp <- unotrotate.func(tuple4(~rs1, (1'h1), (1'h1), zeroExtend(shamt)));
           rg_rd <= temp;
         end
  //       'h08c, 'h08d, 'h08e, 'h08f, 'h014, 'h015, 'h016, 'h017, 'h02e : begin //grev grevi
@@ -142,13 +151,17 @@ package ALU;
             else c = b;
             if(shamt[4] == 1) d = gzip_stage(c, 64'h00ff000000ff0000, 64'h0000ff000000ff00, 8);
             else d = c;
+            e = d;
+            `ifdef RV64
             if(shamt[5] == 1) e = gzip_stage(d, 64'h0000ffff00000000, 64'h00000000ffff0000, 16);
-            else e = d;
+            `endif
             rg_rd <= e;
           end  
           else begin
+             a = rs1;
+            `ifdef RV64
             if(shamt[5] == 1) a = gzip_stage(rs1, 64'h0000ffff00000000, 64'h00000000ffff0000, 16);
-            else a = rs1;
+            `endif
             if(shamt[4] == 1) b = gzip_stage(a, 64'h00ff000000ff0000, 64'h0000ff000000ff00, 8);
             else b = a;
             if(shamt[3] == 1) c = gzip_stage(b, 64'h0f000f000f000f00, 64'h00f000f000f000f0, 4);
@@ -172,7 +185,6 @@ package ALU;
         'h090, 'h091, 'h092, 'h093 : rg_depext <= 1;
         'h094, 'h095, 'h096, 'h097 : rg_depext <= 2;
         'h08c, 'h08d, 'h08e, 'h08f, 'h014, 'h015, 'h016, 'h017, 'h02e : rg_depext <= 3; 
-        default : rg_depext <= 0;
       endcase
 
 //      if((opcode == 1 && funct3 == 3) || (opcode == 0 && funct3 == 5)) begin //serial grev grevi
@@ -190,7 +202,7 @@ package ALU;
 
     endmethod
 
-    method Bit#(64) mn_done if(rg_depext == 0);
+    method Bit#(XLEN) mn_done if(rg_depext == 0);
       return rg_rd;
     endmethod
 

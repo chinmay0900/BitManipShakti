@@ -29,6 +29,13 @@ module mkTestbench();
 //opcode OP-IMM = 0 funct3 = 5 : GREVI           'h014/5/6/7
 //opcode OP-IMM = 0 funct3 = 6 : GZIP            'h018/9/a/b
 
+//opcode OP-IMM-32 funct3 = 0 : CLZW
+//opcode OP-IMM-32 funct3 = 1 : CTZW
+//opcode OP-IMM-32 funct3 = 2 : PCNTW
+//opcode OP-IMM-32 funct3 = 3 : SLOIW
+//opcode OP-IMM-32 funct3 = 4 : SROIW
+//opcode OP-IMM-32 funct3 = 5 : RORIW
+
 //opcode OP = 4 funct3 = 0 : ANDC                'h080/1/2/3
 //opcode OP = 4 funct3 = 1 imm = 8**: SRO        'h086
 //opcode OP = 4 funct3 = 2 imm = 8**: SLO        'h08a
@@ -37,6 +44,14 @@ module mkTestbench();
 //opcode OP = 4 funct3 = 3 : GREV                'h08c/d/e/f
 //opcode OP = 4 funct3 = 4 : BEXT                'h090/1/2/3
 //opcode OP = 4 funct3 = 5 : BDEP                'h094/5/6/7
+
+//opcode OP-32 funct3 = 0 : SROW
+//opcode OP-32 funct3 = 1 : SLOW
+//opcode OP-32 funct3 = 2 : RORW
+//opcode OP-32 funct3 = 3 : ROLW
+//opcode OP-32 funct3 = 4 : BEXTW
+//opcode OP-32 funct3 = 5 : BDEPW
+
 
 //opcode OP = 1 funct3 = 3 imm = 0 : CNEG        'h02c
 //opcode OP = 1 funct3 = 3 imm = 1 : CNOT        'h02d
@@ -67,7 +82,7 @@ module mkTestbench();
     imm = {1'b1,lfsr_opcode.value[26:16]};
     $display($time, "\tInputs: rs1: %h rs2: %h \n\t\t\topcode: %h funct3: %h imm:%h\n", rs1, rs2, opcode, funct3, imm);
     alu.ma_start(opcode, funct3, imm, rs1, rs2);
-    `ifdef RV64 rg_checker <= checker_64(opcode, funct3, imm, rs1, rs2); $display("64 bit baby!!!");
+    `ifdef RV64 rg_checker <= checker_64(opcode, funct3, imm, rs1, rs2); 
     `else rg_checker <= checker_32(opcode, funct3, imm, rs1, rs2);
     `endif
     lfsr_rs11.next();

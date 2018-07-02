@@ -78,7 +78,7 @@ module mkTestbench();
     Bit#(12) imm;
     rs1 = truncate({lfsr_rs11.value,lfsr_rs12.value});
     rs2 = truncate({lfsr_rs21.value,lfsr_rs22.value});
-    opcode = {4'b0,lfsr_opcode.value[11],2'b0};
+    opcode = 'h13;//{4'b0,lfsr_opcode.value[11],2'b0};
     funct3 = lfsr_opcode.value[5:3];
     imm = {1'b1,lfsr_opcode.value[26:16]};
     $display($time, "\tInputs: rs1: %h rs2: %h \n\t\t\topcode: %h funct3: %h imm:%h\n", rs1, rs2, opcode, funct3, imm);

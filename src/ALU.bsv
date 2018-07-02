@@ -106,23 +106,23 @@ package ALU;
 
       case(funsel)
         `ifdef RV64 'h360, 'h361, 'h362, 'h363, `endif 'h260, 'h261, 'h262, 'h263 : rg_rd <= zeroExtend(pack(countZerosMSB(rs1))); //clz clzw
-        `ifdef RV64 'h364, 'h365, 'h366, 'h367, `endif 'h004, 'h005, 'h006, 'h007 : rg_rd <= zeroExtend(pack(countZerosLSB(rs1))); //ctz ctzw
-        `ifdef RV64 'h368, 'h369, 'h36a, 'h36b, `endif 'h008, 'h009, 'h00a, 'h00b : rg_rd <= zeroExtend(pack(countOnes(rs1))); //pcnt pcntw 
-        'h080, 'h081, 'h082, 'h083 : begin  //andwithc
+        `ifdef RV64 'h364, 'h365, 'h366, 'h367, `endif 'h264, 'h265, 'h266, 'h267 : rg_rd <= zeroExtend(pack(countZerosLSB(rs1))); //ctz ctzw
+        `ifdef RV64 'h368, 'h369, 'h36a, 'h36b, `endif 'h268, 'h269, 'h26a, 'h26b : rg_rd <= zeroExtend(pack(countOnes(rs1))); //pcnt pcntw 
+        'h660, 'h661, 'h662, 'h663 : begin  //andwithc
 //          let temp <- ureverse.func(tuple5(rs1, ~rs2, 'h0, 'h0, 'h0));
           rg_rd <= rs1&(~rs2);//temp; 
         end
         'h02c : rg_rd <= (~rs1) + 1; //cneg
         'h02d : rg_rd <= ~rs1; //cnot
-        `ifdef RV64 'h760, 'h761, 'h762, 'h763, 'h370, 'h371, 'h372, 'h373 `endif 'h086, 'h012 : begin //sro sroi srow sroiw
+        `ifdef RV64 'h760, 'h761, 'h762, 'h763, 'h370, 'h371, 'h372, 'h373, `endif 'h666, 'h272 : begin //sro sroi srow sroiw
           let temp <- unotrotate.func(tuple4(rs1, (1'h0), (1'h1),(shamt==0)?fromInteger(valueOf(XLEN)):zeroExtend(shamt)));
           rg_rd <= ~temp;
         end
-        `ifdef RV64 'h764, 'h765, 'h766, 'h767, 'h36c, 'h36d, 'h36e, 'h36f, `endif 'h08a, 'h00e : begin //slo sloi slow sloiw
+        `ifdef RV64 'h764, 'h765, 'h766, 'h767, 'h36c, 'h36d, 'h36e, 'h36f, `endif 'h66a, 'h26e : begin //slo sloi slow sloiw
           let temp <- (unotrotate.func(tuple4(rs1, (1'h1), (1'h0), zeroExtend(shamt))));
           rg_rd <= ~temp;
         end
-        `ifdef RV64 'h768, 'h769, 'h76a, 'h76b, 'h374, 'h375, 'h376, 'h377, 'h76c, 'h76d, 'h76e, 'h76f `endif 'h087, 'h00f, 'h08b : begin //ror rori rol rorw roriw rolw
+        `ifdef RV64 'h768, 'h769, 'h76a, 'h76b, 'h374, 'h375, 'h376, 'h377, 'h76c, 'h76d, 'h76e, 'h76f, `endif 'h667, 'h26f, 'h66b : begin //ror rori rol rorw roriw rolw
           let temp <- unotrotate.func(tuple4(~rs1, (1'h1), (1'h1), zeroExtend(shamt)));
           rg_rd <= temp;
         end

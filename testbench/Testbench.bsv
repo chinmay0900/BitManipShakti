@@ -20,42 +20,43 @@ module mkTestbench();
   LFSR #(Bit #(32)) lfsr_rs22 <- mkLFSR_32;
   LFSR #(Bit #(32)) lfsr_opcode <- mkLFSR_32;
 
-//opcode OP-IMM = 0 funct3 = 0 : CLZ             'h000/1/2/3
-//opcode OP-IMM = 0 funct3 = 1 : CTZ             'h004/5/6/7
-//opcode OP-IMM = 0 funct3 = 2 : PCNT            'h008/9/a/b
-//opcode OP-IMM = 0 funct3 = 3 imm = 8**: SLOI   'h00e
-//opcode OP-IMM = 0 funct3 = 4 imm = 8**: SROI   'h012
-//opcode OP-IMM = 0 funct3 = 3 imm = c**: RORI   'h00f
-//opcode OP-IMM = 0 funct3 = 5 : GREVI           'h014/5/6/7
-//opcode OP-IMM = 0 funct3 = 6 : GZIP            'h018/9/a/b
+//opcode OP-IMM = 13 funct3 = 0 : CLZ             'h000/1/2/3
+//opcode OP-IMM = 13 funct3 = 1 : CTZ             'h004/5/6/7
+//opcode OP-IMM = 13 funct3 = 2 : PCNT            'h008/9/a/b
+//opcode OP-IMM = 13 funct3 = 3 imm = 8**: SLOI   'h00e
+//opcode OP-IMM = 13 funct3 = 4 imm = 8**: SROI   'h012
+//opcode OP-IMM = 13 funct3 = 3 imm = c**: RORI   'h00f
+//opcode OP-IMM = 13 funct3 = 5 : GREVI           'h014/5/6/7
+//opcode OP-IMM = 13 funct3 = 6 : GZIP            'h018/9/a/b
 
-//opcode OP-IMM-32 funct3 = 0 : CLZW
-//opcode OP-IMM-32 funct3 = 1 : CTZW
-//opcode OP-IMM-32 funct3 = 2 : PCNTW
-//opcode OP-IMM-32 funct3 = 3 : SLOIW
-//opcode OP-IMM-32 funct3 = 4 : SROIW
-//opcode OP-IMM-32 funct3 = 5 : RORIW
+//opcode OP-IMM-32 = 1B funct3 = 0 : CLZW
+//opcode OP-IMM-32 = 1B funct3 = 1 : CTZW
+//opcode OP-IMM-32 = 1B funct3 = 2 : PCNTW
+//opcode OP-IMM-32 = 1B funct3 = 3 : SLOIW
+//opcode OP-IMM-32 = 1B funct3 = 4 : SROIW
+//opcode OP-IMM-32 = 1B funct3 = 5 : RORIW
 
-//opcode OP = 4 funct3 = 0 : ANDC                'h080/1/2/3
-//opcode OP = 4 funct3 = 1 imm = 8**: SRO        'h086
-//opcode OP = 4 funct3 = 2 imm = 8**: SLO        'h08a
-//opcode OP = 4 funct3 = 1 imm = c**: ROR        'h087
-//opcode OP = 4 funct3 = 2 imm = c**: ROL        'h08b
-//opcode OP = 4 funct3 = 3 : GREV                'h08c/d/e/f
-//opcode OP = 4 funct3 = 4 : BEXT                'h090/1/2/3
-//opcode OP = 4 funct3 = 5 : BDEP                'h094/5/6/7
+//opcode OP = 33 funct3 = 0 : ANDC                'h080/1/2/3
+//opcode OP = 33 funct3 = 1 imm = 8**: SRO        'h086
+//opcode OP = 33 funct3 = 2 imm = 8**: SLO        'h08a
+//opcode OP = 33 funct3 = 1 imm = c**: ROR        'h087
+//opcode OP = 33 funct3 = 2 imm = c**: ROL        'h08b
+//opcode OP = 33 funct3 = 3 : GREV                'h08c/d/e/f
+//opcode OP = 33 funct3 = 4 : BEXT                'h090/1/2/3
+//opcode OP = 33 funct3 = 5 : BDEP                'h094/5/6/7
 
-//opcode OP-32 funct3 = 0 : SROW
-//opcode OP-32 funct3 = 1 : SLOW
-//opcode OP-32 funct3 = 2 : RORW
-//opcode OP-32 funct3 = 3 : ROLW
-//opcode OP-32 funct3 = 4 : BEXTW
-//opcode OP-32 funct3 = 5 : BDEPW
+//opcode OP-32 = 3B funct3 = 0 : SROW
+//opcode OP-32 = 3B funct3 = 1 : SLOW
+//opcode OP-32 = 3B funct3 = 2 : RORW
+//opcode OP-32 = 3B funct3 = 3 : ROLW
+//opcode OP-32 = 3B funct3 = 4 : BEXTW
+//opcode OP-32 = 3B funct3 = 5 : BDEPW
 
 
-//opcode OP = 1 funct3 = 3 imm = 0 : CNEG        'h02c
-//opcode OP = 1 funct3 = 3 imm = 1 : CNOT        'h02d
-//opcode OP = 1 funct3 = 3 imm = 2 : CBREV       'h02e
+//opcode OP = 1 funct3 = 3 imm = 0 : CNEG        'h02c  **
+//opcode OP = 1 funct3 = 3 imm = 1 : CNOT        'h02d  **
+//opcode OP = 1 funct3 = 3 imm = 2 : CBREV       'h02e  **
+// ** -> OpCodes assigned properly, others are placeholders.
 
   Reg#(Bit#(32)) rg_count <- mkReg(0);
   Reg#(Bool) rg_state <- mkReg(True);

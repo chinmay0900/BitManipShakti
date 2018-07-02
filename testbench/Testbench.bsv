@@ -20,37 +20,37 @@ module mkTestbench();
   LFSR #(Bit #(32)) lfsr_rs22 <- mkLFSR_32;
   LFSR #(Bit #(32)) lfsr_opcode <- mkLFSR_32;
 
-//opcode OP-IMM = 13 funct3 = 0 : CLZ             'h000/1/2/3
-//opcode OP-IMM = 13 funct3 = 1 : CTZ             'h004/5/6/7
-//opcode OP-IMM = 13 funct3 = 2 : PCNT            'h008/9/a/b
-//opcode OP-IMM = 13 funct3 = 3 imm = 8**: SLOI   'h00e
-//opcode OP-IMM = 13 funct3 = 4 imm = 8**: SROI   'h012
-//opcode OP-IMM = 13 funct3 = 3 imm = c**: RORI   'h00f
-//opcode OP-IMM = 13 funct3 = 5 : GREVI           'h014/5/6/7
-//opcode OP-IMM = 13 funct3 = 6 : GZIP            'h018/9/a/b
+//opcode OP-IMM = 13 funct3 = 0 : CLZ             'h260/1/2/3  //'h000/1/2/3
+//opcode OP-IMM = 13 funct3 = 1 : CTZ             'h264/5/6/7  //'h004/5/6/7
+//opcode OP-IMM = 13 funct3 = 2 : PCNT            'h268/9/a/b  //'h008/9/a/b
+//opcode OP-IMM = 13 funct3 = 3 imm = 8**: SLOI   'h26e        //'h00e
+//opcode OP-IMM = 13 funct3 = 4 imm = 8**: SROI   'h272        //'h012
+//opcode OP-IMM = 13 funct3 = 3 imm = c**: RORI   'h26f        //'h00f
+//opcode OP-IMM = 13 funct3 = 5 : GREVI           'h274/5/6/7  //'h014/5/6/7
+//opcode OP-IMM = 13 funct3 = 6 : GZIP            'h278/9/a/b  //'h018/9/a/b
 
-//opcode OP-IMM-32 = 1B funct3 = 0 : CLZW
-//opcode OP-IMM-32 = 1B funct3 = 1 : CTZW
-//opcode OP-IMM-32 = 1B funct3 = 2 : PCNTW
-//opcode OP-IMM-32 = 1B funct3 = 3 : SLOIW
-//opcode OP-IMM-32 = 1B funct3 = 4 : SROIW
-//opcode OP-IMM-32 = 1B funct3 = 5 : RORIW
+//opcode OP-IMM-32 = 1B funct3 = 0 : CLZW         'h360/1/2/3
+//opcode OP-IMM-32 = 1B funct3 = 1 : CTZW         'h364/5/6/7
+//opcode OP-IMM-32 = 1B funct3 = 2 : PCNTW        'h368/9/a/b
+//opcode OP-IMM-32 = 1B funct3 = 3 : SLOIW        'h36c/d/e/f
+//opcode OP-IMM-32 = 1B funct3 = 4 : SROIW        'h370/1/2/3
+//opcode OP-IMM-32 = 1B funct3 = 5 : RORIW        'h374/5/6/7
 
-//opcode OP = 33 funct3 = 0 : ANDC                'h080/1/2/3
-//opcode OP = 33 funct3 = 1 imm = 8**: SRO        'h086
-//opcode OP = 33 funct3 = 2 imm = 8**: SLO        'h08a
-//opcode OP = 33 funct3 = 1 imm = c**: ROR        'h087
-//opcode OP = 33 funct3 = 2 imm = c**: ROL        'h08b
-//opcode OP = 33 funct3 = 3 : GREV                'h08c/d/e/f
-//opcode OP = 33 funct3 = 4 : BEXT                'h090/1/2/3
-//opcode OP = 33 funct3 = 5 : BDEP                'h094/5/6/7
+//opcode OP = 33 funct3 = 0 : ANDC                'h660/1/2/3  //'h080/1/2/3
+//opcode OP = 33 funct3 = 1 imm = 8**: SRO        'h666        //'h086
+//opcode OP = 33 funct3 = 2 imm = 8**: SLO        'h66a        //'h08a
+//opcode OP = 33 funct3 = 1 imm = c**: ROR        'h667        //'h087
+//opcode OP = 33 funct3 = 2 imm = c**: ROL        'h66b        //'h08b
+//opcode OP = 33 funct3 = 3 : GREV                'h66c/d/e/f  //'h08c/d/e/f
+//opcode OP = 33 funct3 = 4 : BEXT                'h670/1/2/3  //'h090/1/2/3
+//opcode OP = 33 funct3 = 5 : BDEP                'h674/5/6/7  //'h094/5/6/7
 
-//opcode OP-32 = 3B funct3 = 0 : SROW
-//opcode OP-32 = 3B funct3 = 1 : SLOW
-//opcode OP-32 = 3B funct3 = 2 : RORW
-//opcode OP-32 = 3B funct3 = 3 : ROLW
-//opcode OP-32 = 3B funct3 = 4 : BEXTW
-//opcode OP-32 = 3B funct3 = 5 : BDEPW
+//opcode OP-32 = 3B funct3 = 0 : SROW             'h760/1/2/3
+//opcode OP-32 = 3B funct3 = 1 : SLOW             'h764/5/6/7
+//opcode OP-32 = 3B funct3 = 2 : RORW             'h768/9/a/b
+//opcode OP-32 = 3B funct3 = 3 : ROLW             'h76c/d/e/f
+//opcode OP-32 = 3B funct3 = 4 : BEXTW            'h770/1/2/3
+//opcode OP-32 = 3B funct3 = 5 : BDEPW            'h774/5/6/7
 
 
 //opcode OP = 1 funct3 = 3 imm = 0 : CNEG        'h02c  **

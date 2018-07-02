@@ -105,58 +105,27 @@ package ALU;
       endcase
 
       case(funsel)
-        `ifdef RV64
-           'h360, 'h361, 'h362, 'h363 : rg_rd <= zeroExtend(pack(countZerosMSB(rs1))); //clzw
-           'h364, 'h365, 'h366, 'h367 : rg_rd <= zeroExtend(pack(countZerosLSB(rs1))); //ctzw
-           'h368, 'h369, 'h36a, 'h36b : rg_rd <= zeroExtend(pack(countOnes(rs1))); //pcntw 
-           'h764, 'h765, 'h766, 'h767, 'h36c, 'h36d, 'h36e, 'h36f : begin //slow sloiw
-           let temp <- (unotrotate.func(tuple4(rs1, (1'h1), (1'h0), zeroExtend(shamt))));
-           rg_rd <= ~temp;
-           end
-           'h760, 'h761, 'h762, 'h763, 'h370, 'h371, 'h372, 'h373 : begin //srow sroiw
-           let temp <- unotrotate.func(tuple4(rs1, (1'h0), (1'h1),(shamt==0)?fromInteger(valueOf(XLEN)):zeroExtend(shamt)));
-           rg_rd <= ~temp;
-           end
-           'h768,'h769, 'h76a, 'h76b, 'h374, 'h375, 'h376, 'h377, 'h76c, 'h76d, 'h76e, 'h76f  : begin //rorw roriw rolw
-           let temp <- unotrotate.func(tuple4(~rs1, (1'h1), (1'h1), zeroExtend(shamt)));
-           rg_rd <= temp;
-           end
-        `else           
-           'h260, 'h261, 'h262, 'h263 : rg_rd <= zeroExtend(pack(countZerosMSB(rs1))); //clz
-           'h264, 'h265, 'h266, 'h267 : rg_rd <= zeroExtend(pack(countZerosLSB(rs1))); //ctz
-           'h268, 'h269, 'h26a, 'h26b : rg_rd <= zeroExtend(pack(countOnes(rs1))); //pcnt 
-           'h66a, 'h26e : begin //slo sloi
-           let temp <- (unotrotate.func(tuple4(rs1, (1'h1), (1'h0), zeroExtend(shamt))));
-           rg_rd <= ~temp;
-           end
-           'h666, 'h272 : begin //sro sroi
-           let temp <- unotrotate.func(tuple4(rs1, (1'h0), (1'h1),(shamt==0)?fromInteger(valueOf(XLEN)):zeroExtend(shamt)));
-           rg_rd <= ~temp;
-           end
-           'h667, 'h26f, 'h66b : begin //ror rori rol
-           let temp <- unotrotate.func(tuple4(~rs1, (1'h1), (1'h1), zeroExtend(shamt)));
-           rg_rd <= temp;
-           end
-        `endif
-
-        'h660, 'h661, 'h662, 'h663 : begin  //andwithc
+        `ifdef RV64 'h360, 'h361, 'h362, 'h363, `endif 'h260, 'h261, 'h262, 'h263 : rg_rd <= zeroExtend(pack(countZerosMSB(rs1))); //clz clzw
+        `ifdef RV64 'h364, 'h365, 'h366, 'h367, `endif 'h004, 'h005, 'h006, 'h007 : rg_rd <= zeroExtend(pack(countZerosLSB(rs1))); //ctz ctzw
+        `ifdef RV64 'h368, 'h369, 'h36a, 'h36b, `endif 'h008, 'h009, 'h00a, 'h00b : rg_rd <= zeroExtend(pack(countOnes(rs1))); //pcnt pcntw 
+        'h080, 'h081, 'h082, 'h083 : begin  //andwithc
 //          let temp <- ureverse.func(tuple5(rs1, ~rs2, 'h0, 'h0, 'h0));
           rg_rd <= rs1&(~rs2);//temp; 
         end
         'h02c : rg_rd <= (~rs1) + 1; //cneg
         'h02d : rg_rd <= ~rs1; //cnot
- //       'h666, 'h272 : begin //sro sroi
- //         let temp <- unotrotate.func(tuple4(rs1, (1'h0), (1'h1),(shamt==0)?fromInteger(valueOf(XLEN)):zeroExtend(shamt)));
- //         rg_rd <= ~temp;
- //       end
- //       'h66a, 'h26e : begin //slo sloi
- //         let temp <- (unotrotate.func(tuple4(rs1, (1'h1), (1'h0), zeroExtend(shamt))));
- //         rg_rd <= ~temp;
- //      end
- //       'h667, 'h26f, 'h66b : begin //ror rori rol
- //         let temp <- unotrotate.func(tuple4(~rs1, (1'h1), (1'h1), zeroExtend(shamt)));
- //         rg_rd <= temp;
- //       end
+        `ifdef RV64 'h760, 'h761, 'h762, 'h763, 'h370, 'h371, 'h372, 'h373 `endif 'h086, 'h012 : begin //sro sroi srow sroiw
+          let temp <- unotrotate.func(tuple4(rs1, (1'h0), (1'h1),(shamt==0)?fromInteger(valueOf(XLEN)):zeroExtend(shamt)));
+          rg_rd <= ~temp;
+        end
+        `ifdef RV64 'h764, 'h765, 'h766, 'h767, 'h36c, 'h36d, 'h36e, 'h36f, `endif 'h08a, 'h00e : begin //slo sloi slow sloiw
+          let temp <- (unotrotate.func(tuple4(rs1, (1'h1), (1'h0), zeroExtend(shamt))));
+          rg_rd <= ~temp;
+        end
+        `ifdef RV64 'h768, 'h769, 'h76a, 'h76b, 'h374, 'h375, 'h376, 'h377, 'h76c, 'h76d, 'h76e, 'h76f `endif 'h087, 'h00f, 'h08b : begin //ror rori rol rorw roriw rolw
+          let temp <- unotrotate.func(tuple4(~rs1, (1'h1), (1'h1), zeroExtend(shamt)));
+          rg_rd <= temp;
+        end
  //       'h08c, 'h08d, 'h08e, 'h08f, 'h014, 'h015, 'h016, 'h017, 'h02e : begin //grev grevi
  //         if(rs2[0] == 1) a = reverse(tuple5(rs1, 64'h5555555555555555, 64'hAAAAAAAAAAAAAAAA, 1, 1));
  //         else a = rs1;
@@ -213,8 +182,8 @@ package ALU;
       endcase
 
       case (funsel)
-        'h670, 'h671, 'h672, 'h673 : rg_depext <= 1;
-        'h674, 'h675, 'h676, 'h677 : rg_depext <= 2;
+        `ifdef RV64 'h770, 'h771, 'h772, 'h773, `endif 'h670, 'h671, 'h672, 'h673 : rg_depext <= 1;
+        `ifdef RV64 'h774, 'h775, 'h776, 'h777, `endif 'h674, 'h675, 'h676, 'h677 : rg_depext <= 2;
         'h66c, 'h66d, 'h66e, 'h66f, 'h274, 'h275, 'h276, 'h277, 'h02e : rg_depext <= 3; 
       endcase
 

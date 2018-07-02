@@ -8,7 +8,7 @@ unsigned int checker_32(unsigned char opcode, unsigned char funct3, unsigned int
   unsigned int  y = imm & 0xc00;
   unsigned int t = 0x1;
 
-  if(opcode == 0 && (((funct3 == 3|| funct3 == 4) && (y == 0x800 || y == 0xc00)) || funct3 == 5))
+  if(opcode == 0x13 && (((funct3 == 3|| funct3 == 4) && (y == 0x800 || y == 0xc00)) || funct3 == 5))
 		shamt = imm & (31);
   else if(opcode == 1 && funct3 == 3 && y == 0x800)
     shamt = 0x3f; //cbrev
@@ -21,14 +21,14 @@ unsigned int checker_32(unsigned char opcode, unsigned char funct3, unsigned int
   if(opcode == 1 && funct3 == 3 && y == 0x000) //cneg
     return((~rs1) + 1);
 
-  if(opcode == 0 && funct3 == 0) //clz
+  if(opcode == 0x13 && funct3 == 0) //clz
     {for (int count = 0; count < 32; count++)
 			{if ((rs1 << count) >> (31))
 				{return count;}}
 		return 64;
 		}
 
-	if(opcode == 0 && funct3 == 1) //ctz
+	if(opcode == 0x13 && funct3 == 1) //ctz
 		{for (int count = 0; count < 32; count++)
 			{if ((rs1 >> count) & 1)
 				{return count;}}
@@ -37,7 +37,7 @@ unsigned int checker_32(unsigned char opcode, unsigned char funct3, unsigned int
 
   unsigned int rd = 0; 
 
-  if(opcode == 0 && funct3 == 2)//pcnt
+  if(opcode == 0x13 && funct3 == 2)//pcnt
     {
       int count = 0;
       for (int index = 0; index < 32; index++)
@@ -45,22 +45,22 @@ unsigned int checker_32(unsigned char opcode, unsigned char funct3, unsigned int
       rd = count;
     }
 
-  if(opcode == 4 && funct3 == 0)//andc
+  if(opcode == 0x33 && funct3 == 0)//andc
     rd = rs1 & ~rs2;
 
-  if((opcode == 4 && funct3 == 1 && y == 0x800) || (opcode == 0 && funct3 == 4 && y == 0x800))//sro sroi
+  if((opcode == 0x33 && funct3 == 1 && y == 0x800) || (opcode == 0x13 && funct3 == 4 && y == 0x800))//sro sroi
     rd = (~(~rs1 >> shamt));
 
-  if((opcode == 4 && funct3 == 2 && y == 0x800) || (opcode == 0 && funct3 == 3 && y == 0x800))//slo sloi
+  if((opcode == 0x33 && funct3 == 2 && y == 0x800) || (opcode == 0x13 && funct3 == 3 && y == 0x800))//slo sloi
     rd = (~(~rs1 << shamt));
 
-  if((opcode == 4 && funct3 == 1 && y == 0xc00) || (opcode == 0 && funct3 == 3 && y == 0xc00))//ror rori
+  if((opcode == 0x33 && funct3 == 1 && y == 0xc00) || (opcode == 0x13 && funct3 == 3 && y == 0xc00))//ror rori
     rd = ((rs1 >> shamt) | (rs1 << (32 - shamt)));
 
-  if(opcode == 4 && funct3 == 2 && y == 0xc00)//rol
+  if(opcode == 0x33 && funct3 == 2 && y == 0xc00)//rol
     rd = ((rs1 << shamt) | (rs1 >> (32 - shamt)));
 
-  if((opcode == 4 && funct3 == 3)||(opcode == 0 && funct3 == 5)||(opcode == 1 && funct3 == 3 && y == 0x800))//grev grevi
+  if((opcode == 0x33 && funct3 == 3)||(opcode == 0x13 && funct3 == 5)||(opcode == 1 && funct3 == 3 && y == 0x800))//grev grevi
     {
 
       if(shamt & 1)
@@ -76,7 +76,7 @@ unsigned int checker_32(unsigned char opcode, unsigned char funct3, unsigned int
       rd = x;
     }
 
-  if(opcode == 0 && funct3 == 6)// gzip 
+  if(opcode == 0x13 && funct3 == 6)// gzip 
     {
       if(shamt & 1)
         {
@@ -105,7 +105,7 @@ unsigned int checker_32(unsigned char opcode, unsigned char funct3, unsigned int
       rd = x;
     }
 
-  if(opcode == 4 && funct3 == 4)//bit extract
+  if(opcode == 0x33 && funct3 == 4)//bit extract
     {
      unsigned int r = 0;
      for (int i = 0, j = 0; i < 32; i++)
@@ -118,7 +118,7 @@ unsigned int checker_32(unsigned char opcode, unsigned char funct3, unsigned int
      rd = r;
     }
 
-  else if(opcode == 4 && funct3 == 5)//bit deposit
+  else if(opcode == 0x33 && funct3 == 5)//bit deposit
     {
       unsigned int r = 0;
       for (int i = 0, j = 0; i < 32; i++)

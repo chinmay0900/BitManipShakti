@@ -35,7 +35,7 @@ package ALU;
     Reg#(Bit#(XLEN)) rg_x <- mkReg(0);
     Reg#(Bit#(XLEN)) rg_y <- mkReg(0);
     Reg#(Bit#(3)) rg_depext <- mkDReg(0);
-    Reg#(Bit#(7)) rg_count <- mkReg(0);
+    Reg#(Bit#(1)) rg_count <- mkDReg(0);
     Reg#(Bit#(6)) rg_shamt <- mkReg(0);
     Wrapper#(Tuple4#(Bit#(XLEN), Bit#(1), Bit#(1), Bit#(7)),  Bit#(XLEN)) unotrotate <- mkUniqueWrapper(notrotate);
 
@@ -45,6 +45,7 @@ package ALU;
       else if((rg_x & lastsetbit) > 0 && rg_depext == 1) rg_rd <= rg_rd | rg_m; //extract
       rg_y <= rg_y - lastsetbit;
       rg_m <= rg_m << 1;
+	$display("rg_x:%h, rg_rd:%h, lastsetbit:%h",rg_x, rg_rd, lastsetbit);
       if (rg_y != 0) rg_depext <= rg_depext;
     endrule
 
@@ -89,17 +90,37 @@ package ALU;
 //      end
 //    endrule
 
-    method Action ma_start(Bit#(7) opcode, Bit#(3) funct3, Bit#(12) imm, Bit#(XLEN) rs1, Bit#(XLEN)
-    rs2)if(rg_depext==0); 
+    method Action ma_start(Bit#(7) opcode, Bit#(3) funct3, Bit#(12) imm, Bit#(XLEN) rs1, Bit#(XLEN) rs2)if(rg_depext==0); 
       Bit#(XLEN) a = 0, b = 0, c = 0, d = 0, e = 0;
       Bit#(12) funsel = {opcode,funct3,imm[11:10]};
       Bit#(TLog#(XLEN)) shamt = 0;
 
+      `ifdef RV64
+        case(funsel)
+          'h364, 'h365, 'h366, 'h367, 'h368, 'h369, 'h36a, 'h36b, 'h36c, 'h36d, 'h36e, 'h36f, 'h370, 'h371, 'h372, 'h373, 'h760, 'h761, 'h762, 'h763, 'h764, 'h765, 'h766, 'h767,   'h770, 'h771, 'h772, 'h773, 'h774, 'h775, 'h776, 'h777 : 
+	  begin 
+	  rs1 = rs1 & 64'h00000000ffffffff;
+	  rs2 = rs2 & 64'h00000000ffffffff;
+	  rg_count <= 1;
+	  end
+	  'h360, 'h361, 'h362, 'h363, 'h768, 'h769, 'h76a, 'h76b, 'h76c, 'h76d, 'h76e, 'h76f, 'h374, 'h375, 'h376, 'h377 : 
+          begin
+            rs1 = (rs1 << 32) | (rs1 & 64'hffffffff);
+	    rs2 = (rs2 << 32) | (rs2 & 64'hffffffff);
+            rg_count <= 1;
+          end 
+        endcase
+      `endif
+
       case(funsel)
-        'h66a, 'h66b, 'h66c, 'h66d, 'h66e, 'h66f, 'h278, 'h279, 'h27a, 'h27b : shamt = truncate(rs2);
-        'h666, 'h667 : shamt = truncate('h40-rs2);
-        'h26e  : shamt = truncate(imm);
-        'h272, 'h26f: shamt = truncate('h40 - {1'b0,imm[5:0]}); 
+        'h764, 'h765 , 'h766, 'h767, 'h76c, 'h76d, 'h76e, 'h76f : shamt = {1'b0,rs2[4:0]};
+	'h66a, 'h66b, 'h66c, 'h66d, 'h66e, 'h66f, 'h278, 'h279, 'h27a, 'h27b : shamt = truncate(rs2);
+        'h760, 'h761, 'h762, 'h763, 'h768, 'h769, 'h76a, 'h76b : shamt = truncate('h20-{1'b0,rs2[4:0]});
+	'h666, 'h667 : shamt = truncate('h40-rs2);
+        'h36c, 'h36d, 'h36e, 'h36f : shamt = {1'b0,imm[4:0]};
+	'h26e  : shamt = truncate(imm);
+        'h370, 'h371, 'h372, 'h373, 'h374, 'h375, 'h376, 'h377 : shamt = truncate('h20 - {1'b0,imm[4:0]});
+	'h272, 'h26f: shamt = truncate('h40 - {1'b0,imm[5:0]}); 
         'h02e : rs2 = zeroExtend(6'h3f);
         'h274, 'h275, 'h276, 'h277 : rs2 = zeroExtend(imm[6:0]);
       endcase
@@ -120,10 +141,12 @@ package ALU;
         end
         `ifdef RV64 'h764, 'h765, 'h766, 'h767, 'h36c, 'h36d, 'h36e, 'h36f, `endif 'h66a, 'h26e : begin //slo sloi slow sloiw
           let temp <- (unotrotate.func(tuple4(rs1, (1'h1), (1'h0), zeroExtend(shamt))));
+	$display("rs1:%h, shamt:%h, temp:%h\n",rs1,shamt,temp);
           rg_rd <= ~temp;
         end
         `ifdef RV64 'h768, 'h769, 'h76a, 'h76b, 'h374, 'h375, 'h376, 'h377, 'h76c, 'h76d, 'h76e, 'h76f, `endif 'h667, 'h26f, 'h66b : begin //ror rori rol rorw roriw rolw
           let temp <- unotrotate.func(tuple4(~rs1, (1'h1), (1'h1), zeroExtend(shamt)));
+	$display("rs1:%h, shamt:%h, temp:%h\n",rs1,shamt,temp);
           rg_rd <= temp;
         end
  //       'h08c, 'h08d, 'h08e, 'h08f, 'h014, 'h015, 'h016, 'h017, 'h02e : begin //grev grevi
@@ -186,7 +209,7 @@ package ALU;
         `ifdef RV64 'h774, 'h775, 'h776, 'h777, `endif 'h674, 'h675, 'h676, 'h677 : rg_depext <= 2;
         'h66c, 'h66d, 'h66e, 'h66f, 'h274, 'h275, 'h276, 'h277, 'h02e : rg_depext <= 3; 
       endcase
-
+$display("rs1:%h, shamt:%h\n",rs1,shamt);
 //      if((opcode == 1 && funct3 == 3) || (opcode == 0 && funct3 == 5)) begin //serial grev grevi
 //        rg_count <= 1; 
 //        rg_shamt <= (shamt);
@@ -203,7 +226,10 @@ package ALU;
     endmethod
 
     method Bit#(XLEN) mn_done if(rg_depext == 0);
-      return rg_rd;
+      case(rg_count)
+	1: return rg_rd & 64'h00000000ffffffff;
+	0: return rg_rd;
+      endcase
     endmethod
 
   endmodule

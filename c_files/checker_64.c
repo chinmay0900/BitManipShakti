@@ -6,9 +6,10 @@ unsigned long long checker_64(unsigned char opcode, unsigned char funct3, unsign
   unsigned char shamt;
   unsigned long long x = rs1;
   unsigned int  y = imm & 0xc00;
-  unsigned long long t = 0x1;
+  unsigned int s1 = (rs1) & 0xffffffff;
+  unsigned int s2 = (rs2) & 0xffffffff;
 
-  if(opcode == 0x13 && (((funct3 == 3|| funct3 == 4) && (y == 0x800 || y == 0xc00)) || funct3 == 5) || (opcode == 0x1b && (funct3 == 3 || funct3 == 4 || funct3 == 5)))
+  if((opcode == 0x13 && (((funct3 == 3|| funct3 == 4) && (y == 0x800 || y == 0xc00)) || funct3 == 5)) || ((opcode == 0x1b && (funct3 == 3 || funct3 == 4 || funct3 == 5))))
 		shamt = imm & (63);
   else if(opcode == 1 && funct3 == 3 && y == 0x800)
     shamt = 0x3f; //cbrev
@@ -21,44 +22,77 @@ unsigned long long checker_64(unsigned char opcode, unsigned char funct3, unsign
   if(opcode == 1 && funct3 == 3 && y == 0x000) //cneg
     return((~rs1) + 1);
 
-  if((opcode == 0x13 || opcode == 0x1b) && funct3 == 0) //clz
+  if(opcode == 0x13 && funct3 == 0) //clz
     {for (int count = 0; count < 64; count++)
 			{if ((rs1 << count) >> (63))
 				{return count;}}
 		return 64;
 		}
 
-  if((opcode == 0x13 || opcode == 0x1b) && funct3 == 1) //ctz
+  if(opcode == 0x1b && funct3 == 0) //clzw
+    {for (int count = 0; count < 32; count++)
+			{if ((s1 << count) >> (31))
+				{return count;}}
+		return 32;
+		}
+
+  if(opcode == 0x13 && funct3 == 1) //ctz
 		{for (int count = 0; count < 64; count++)
 			{if ((rs1 >> count) & 1)
 				{return count;}}
 		return 64;
 		}
+  if(opcode == 0x1b && funct3 == 1) //ctzw
+		{for (int count = 0; count < 32; count++)
+			{if ((s1 >> count) & 1)
+				{return count;}}
+		return 32;
+		}
 
   unsigned long long rd = 0; 
 
-  if((opcode == 0x13 || opcode == 0x1b) && funct3 == 2)//pcnt
+  if(opcode == 0x13 && funct3 == 2)//pcnt
     {
       int count = 0;
       for (int index = 0; index < 64; index++)
          count += (rs1 >> index) & 1;
       rd = count;
     }
+  
+  if(opcode == 0x1b && funct3 == 2)//pcntw
+    {
+      int count = 0;
+      for (int index = 0; index < 32; index++)
+         count += (s1 >> index) & 1;
+      rd = count;
+    }
 
   if(opcode == 0x33 && funct3 == 0)//andc
     rd = rs1 & ~rs2;
 
-  if((opcode == 0x33 && funct3 == 1 && y == 0x800) || (opcode == 0x13 && funct3 == 4 && y == 0x800) || (opcode == 0x3b && funct3 == 0) || (opcode == 0x1b && funct3 == 4))//sro sroi srow sroiw
+  if((opcode == 0x33 && funct3 == 1 && y == 0x800) || (opcode == 0x13 && funct3 == 4 && y == 0x800))//sro sroi
     rd = (~(~rs1 >> shamt));
 
-  if((opcode == 0x33 && funct3 == 2 && y == 0x800) || (opcode == 0x13 && funct3 == 3 && y == 0x800) || (opcode == 0x3b && funct3 == 1) || (opcode == 0x1b && funct3 == 3))//slo sloi slow sloiw
+  if((opcode == 0x3b && funct3 == 0) || (opcode == 0x1b && funct3 == 4))//srow sroiw
+    rd = (~(~s1 >> shamt));
+
+  if((opcode == 0x33 && funct3 == 2 && y == 0x800) || (opcode == 0x13 && funct3 == 3 && y == 0x800))//slo sloi
     rd = (~(~rs1 << shamt));
 
-  if((opcode == 0x33 && funct3 == 1 && y == 0xc00) || (opcode == 0x13 && funct3 == 3 && y == 0xc00) || (opcode == 0x3b && funct3 == 2) || (opcode == 0x1b && funct3 == 5))//ror rori rorw roriw
+  if((opcode == 0x3b && funct3 == 1) || (opcode == 0x1b && funct3 == 3))//slow sloiw
+    rd = (~(~s1 << shamt));
+
+  if((opcode == 0x33 && funct3 == 1 && y == 0xc00) || (opcode == 0x13 && funct3 == 3 && y == 0xc00))//ror rori
     rd = ((rs1 >> shamt) | (rs1 << (64 - shamt)));
 
-  if((opcode == 0x33 && funct3 == 2 && y == 0xc00) || (opcode == 0x3b && funct3 == 3))//rol rolw
+  if((opcode == 0x3b && funct3 == 2) || (opcode == 0x1b && funct3 == 5))//rorw roriw
+    rd = ((s1 >> shamt) | (s1 << (32 - shamt)));
+
+  if(opcode == 0x33 && funct3 == 2 && y == 0xc00)//rol
     rd = ((rs1 << shamt) | (rs1 >> (64 - shamt)));
+
+  if(opcode == 0x3b && funct3 == 3)//rolw
+    rd = ((s1 << shamt) | (s1 >> (32 - shamt)));
 
   if((opcode == 0x33 && funct3 == 3)||(opcode == 0x13 && funct3 == 5)||(opcode == 1 && funct3 == 3 && y == 0x800))//grev grevi cbrev
     {
@@ -115,6 +149,7 @@ unsigned long long checker_64(unsigned char opcode, unsigned char funct3, unsign
   if(opcode == 0x33 && funct3 == 4)//bit extract
     {
      unsigned long long r = 0;
+     unsigned long long t = 0x1;
      for (int i = 0, j = 0; i < 64; i++)
        if ((rs2 >> i) & 1) 
          {
@@ -125,13 +160,41 @@ unsigned long long checker_64(unsigned char opcode, unsigned char funct3, unsign
      rd = r;
     }
 
+  else if(opcode == 0x3b && funct3 == 4)//bit extract w
+    {
+     unsigned int r = 0;
+     unsigned int t = 0x1;
+     for (int i = 0, j = 0; i < 32; i++)
+       if ((s2 >> i) & 1) 
+         {
+          if ((s1 >> i) & 1)
+            { r = r | (t << j); }
+            j++;
+         }
+     rd = r;
+    }
+
   else if(opcode == 0x33 && funct3 == 5)//bit deposit
     {
       unsigned long long r = 0;
+      unsigned long long t = 0x1;
       for (int i = 0, j = 0; i < 64; i++)
         if ((rs2 >> i) & 1) 
           {
            if ((rs1 >> j) & 1)
+           { r = r | (t << i); }
+           j++;
+          }
+      rd = r;
+    }
+  else if(opcode == 0x3b && funct3 == 5)//bit deposit w
+    {
+      unsigned int r = 0;
+      unsigned int t = 0x1;
+      for (int i = 0, j = 0; i < 32; i++)
+        if ((s2 >> i) & 1) 
+          {
+           if ((s1 >> j) & 1)
            { r = r | (t << i); }
            j++;
           }

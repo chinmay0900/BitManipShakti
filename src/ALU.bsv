@@ -45,7 +45,6 @@ package ALU;
       else if((rg_x & lastsetbit) > 0 && rg_depext == 1) rg_rd <= rg_rd | rg_m; //extract
       rg_y <= rg_y - lastsetbit;
       rg_m <= rg_m << 1;
-	$display("rg_x:%h, rg_rd:%h, lastsetbit:%h",rg_x, rg_rd, lastsetbit);
       if (rg_y != 0) rg_depext <= rg_depext;
     endrule
 
@@ -113,11 +112,11 @@ package ALU;
       `endif
 
       case(funsel)
-        'h764, 'h765 , 'h766, 'h767, 'h76c, 'h76d, 'h76e, 'h76f : shamt = {1'b0,rs2[4:0]};
+        'h764, 'h765 , 'h766, 'h767, 'h76c, 'h76d, 'h76e, 'h76f : shamt = {zeroExtend(rs2[4:0])};
 	'h66a, 'h66b, 'h66c, 'h66d, 'h66e, 'h66f, 'h278, 'h279, 'h27a, 'h27b : shamt = truncate(rs2);
         'h760, 'h761, 'h762, 'h763, 'h768, 'h769, 'h76a, 'h76b : shamt = truncate('h20-{1'b0,rs2[4:0]});
 	'h666, 'h667 : shamt = truncate('h40-rs2);
-        'h36c, 'h36d, 'h36e, 'h36f : shamt = {1'b0,imm[4:0]};
+        'h36c, 'h36d, 'h36e, 'h36f : shamt = {zeroExtend(imm[4:0])};
 	'h26e  : shamt = truncate(imm);
         'h370, 'h371, 'h372, 'h373, 'h374, 'h375, 'h376, 'h377 : shamt = truncate('h20 - {1'b0,imm[4:0]});
 	'h272, 'h26f: shamt = truncate('h40 - {1'b0,imm[5:0]}); 
@@ -141,12 +140,10 @@ package ALU;
         end
         `ifdef RV64 'h764, 'h765, 'h766, 'h767, 'h36c, 'h36d, 'h36e, 'h36f, `endif 'h66a, 'h26e : begin //slo sloi slow sloiw
           let temp <- (unotrotate.func(tuple4(rs1, (1'h1), (1'h0), zeroExtend(shamt))));
-	$display("rs1:%h, shamt:%h, temp:%h\n",rs1,shamt,temp);
           rg_rd <= ~temp;
         end
         `ifdef RV64 'h768, 'h769, 'h76a, 'h76b, 'h374, 'h375, 'h376, 'h377, 'h76c, 'h76d, 'h76e, 'h76f, `endif 'h667, 'h26f, 'h66b : begin //ror rori rol rorw roriw rolw
           let temp <- unotrotate.func(tuple4(~rs1, (1'h1), (1'h1), zeroExtend(shamt)));
-	$display("rs1:%h, shamt:%h, temp:%h\n",rs1,shamt,temp);
           rg_rd <= temp;
         end
  //       'h08c, 'h08d, 'h08e, 'h08f, 'h014, 'h015, 'h016, 'h017, 'h02e : begin //grev grevi
@@ -209,7 +206,7 @@ package ALU;
         `ifdef RV64 'h774, 'h775, 'h776, 'h777, `endif 'h674, 'h675, 'h676, 'h677 : rg_depext <= 2;
         'h66c, 'h66d, 'h66e, 'h66f, 'h274, 'h275, 'h276, 'h277, 'h02e : rg_depext <= 3; 
       endcase
-$display("rs1:%h, shamt:%h\n",rs1,shamt);
+
 //      if((opcode == 1 && funct3 == 3) || (opcode == 0 && funct3 == 5)) begin //serial grev grevi
 //        rg_count <= 1; 
 //        rg_shamt <= (shamt);
@@ -227,7 +224,7 @@ $display("rs1:%h, shamt:%h\n",rs1,shamt);
 
     method Bit#(XLEN) mn_done if(rg_depext == 0);
       case(rg_count)
-	1: return rg_rd & 64'h00000000ffffffff;
+	1: return rg_rd & 'hffffffff;
 	0: return rg_rd;
       endcase
     endmethod
